@@ -311,6 +311,7 @@ const ARTIST_KANA_OVERRIDES={
   '一青窈':'は',
   '中島美嘉':'な',
   '中森明菜':'な',
+  '中西保志':'な',
   '久保田利伸':'か',
   '井上陽水':'あ',
   '伊藤由奈':'あ',
@@ -334,6 +335,7 @@ const ARTIST_KANA_OVERRIDES={
   '柴咲コウ':'さ',
   '森高千里':'ま',
   '椎名林檎':'さ',
+  '氷川きよし':'は',
   '浜崎あゆみ':'は',
   '當山みれい':'た',
   '相川七瀬':'あ',
@@ -359,7 +361,23 @@ function isEnglishArtist(artist){
 function artistKanaRow(artist){
   const key=artistKey(artist);
   if(ARTIST_KANA_OVERRIDES[key])return ARTIST_KANA_OVERRIDES[key];
-  return kanaRowFromChar(String(artist||'').trim().charAt(0));
+
+  const direct=kanaRowFromChar(String(artist||'').trim().charAt(0));
+  if(direct!=='その他')return direct;
+
+  // 漢字始まりなど読みを文字列だけで判定できない場合は、
+  // そのアーティストに登録済みの50音情報を補助的に使う。
+  const counts={};
+  for(const s of songs){
+    if(String(s.artist||'').trim()!==String(artist||'').trim())continue;
+    const g=String(s.kana_group||'').trim();
+    if(!g||g==='その他'||g==='オリジナル')continue;
+    const row=kanaRowFromChar(g.charAt(0));
+    if(row==='その他')continue;
+    counts[row]=(counts[row]||0)+1;
+  }
+  const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  return ranked[0]?.[0]||'その他';
 }
 function englishInitial(artist){
   const m=String(artist||'').trim().toUpperCase().match(/[A-Z]/);
