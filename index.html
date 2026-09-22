@@ -117,7 +117,7 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 </head>
 <body>
 <div class="app" id="app">
-<section id="hero" class="hero"><img id="roomLogo" class="room-logo" alt=""><div class="eyebrow">LIVE SONG LIST</div><h1 id="pageTitle">SONG REQUEST</h1><div class="streamer-row"><img id="profileImg" class="profile-img" alt=""><div id="streamer" class="streamer">読み込み中…</div></div><p id="heroMessage">あなたのリクエストが、<br>この夜のステージをつくる。</p><div class="count">🎵 <b id="total">—</b> songs</div><div id="mic" class="mic">🎙️</div><button id="secret" class="secret" aria-label="その他">⋯</button></section>
+<section id="hero" class="hero"><img id="roomLogo" class="room-logo" alt=""><div id="eyebrowText" class="eyebrow">LIVE SONG LIST</div><h1 id="pageTitle">SONG REQUEST</h1><div class="streamer-row"><img id="profileImg" class="profile-img" alt=""><div id="streamer" class="streamer">読み込み中…</div></div><p id="heroMessage">あなたのリクエストが、<br>この夜のステージをつくる。</p><div class="count">🎵 <b id="total">—</b> <span id="countLabel">songs</span></div><div id="mic" class="mic">🎙️</div><button id="secret" class="secret" aria-label="その他">⋯</button></section>
 <section class="tools"><input id="search" class="search" placeholder="曲名・アーティスト名で検索"><div class="row" id="filters"><button class="chip active" data-f="all">すべて</button><button class="chip" data-f="original">オリジナル</button><button class="chip" data-f="recommend">おすすめ</button><button class="chip" data-f="popular">よく歌う</button><button class="chip" data-f="new">新曲</button><button class="chip" data-f="limited">▲注記あり</button><button class="chip" data-f="favorite">お気に入り</button></div><div class="artist-mode" id="artistMode"><button class="artist-mode-btn active" data-mode="jp">日本語名</button><button class="artist-mode-btn" data-mode="en">英語名</button></div><div class="row" id="kana"></div></section>
 <main><div class="head"><h2 id="sectionTitle">歌える曲</h2><span id="resultCount"></span></div><div id="list" class="list"><div class="empty">読み込み中…</div></div></main>
 </div>
@@ -137,7 +137,19 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 
 <div id="admin" class="overlay"><div class="sheet">
   <div id="login"><h3 id="adminTitle">管理モード</h3><p class="sub">配信者専用PWを入力してください。</p><div class="field"><label>管理PW</label><input id="pw" class="input" type="password"></div><div class="btnrow"><button class="btn ghost" data-close="admin">閉じる</button><button id="loginBtn" class="btn primary">ログイン</button></div></div>
-  <div id="menu" hidden><h3>管理モード</h3><p class="sub">曲・デザイン・PWを管理できます。</p><div class="btnrow"><button id="logoutBtn" class="btn ghost">ログアウト</button><button id="addBtn" class="btn primary">＋ 曲を追加</button></div><button id="designBtn" class="btn ghost" style="width:100%;margin-top:8px">🎨 デザイン設定</button><button id="changePw" class="btn ghost" style="width:100%;margin-top:8px">PW変更</button></div>
+  <div id="menu" hidden><h3>管理モード</h3><p class="sub">曲・ヘッダー文字・デザイン・PWを管理できます。</p><div class="btnrow"><button id="logoutBtn" class="btn ghost">ログアウト</button><button id="addBtn" class="btn primary">＋ 曲を追加</button></div><button id="headerTextBtn" class="btn ghost" style="width:100%;margin-top:8px">✏️ ヘッダー文字設定</button><button id="designBtn" class="btn ghost" style="width:100%;margin-top:8px">🎨 デザイン設定</button><button id="changePw" class="btn ghost" style="width:100%;margin-top:8px">PW変更</button></div>
+</div></div>
+
+<div id="headertext" class="overlay"><div class="sheet">
+  <h3>ヘッダー文字設定</h3>
+  <p class="sub">このルームのページ上部に表示する文字を変更できます。</p>
+  <div class="field"><label>上段小見出し</label><input id="hEyebrow" class="input" maxlength="40" placeholder="LIVE SONG LIST"></div>
+  <div class="field"><label>メインタイトル</label><input id="hTitle" class="input" maxlength="60" placeholder="SONG REQUEST"></div>
+  <div class="field"><label>配信者名</label><input id="hStreamer" class="input" maxlength="50" placeholder="Leira"></div>
+  <div class="field"><label>紹介文</label><textarea id="hMessage" class="textarea" maxlength="200" placeholder="あなたのリクエストが、この夜のステージをつくる。"></textarea></div>
+  <div class="field"><label>曲数横の文字</label><input id="hCountLabel" class="input" maxlength="20" placeholder="songs"></div>
+  <div class="preview-note">空欄で保存すると、その項目は非表示になります。</div>
+  <div class="btnrow"><button class="btn ghost" data-close="headertext">キャンセル</button><button id="headerTextSave" class="btn primary">保存</button></div>
 </div></div>
 
 <div id="theme" class="overlay"><div class="sheet">
@@ -284,14 +296,39 @@ function openThemeEditor(){
   close('admin');open('theme');
 }
 
+function applyHeaderTexts(){
+  const eyebrow=String(room?.eyebrow_text??'LIVE SONG LIST');
+  const title=String(room?.page_title??'SONG REQUEST');
+  const streamer=String(room?.display_name??'');
+  const message=String(room?.hero_message??'');
+  const countLabel=String(room?.count_label??'songs');
+  $('#eyebrowText').textContent=eyebrow;
+  $('#eyebrowText').style.display=eyebrow?'':'none';
+  $('#pageTitle').textContent=title;
+  $('#pageTitle').style.display=title?'':'none';
+  $('#streamer').textContent=streamer;
+  $('#streamer').style.display=streamer?'':'none';
+  $('#heroMessage').textContent=message;
+  $('#heroMessage').style.display=message?'':'none';
+  $('#countLabel').textContent=countLabel;
+  $('#countLabel').style.display=countLabel?'':'none';
+  document.title=(streamer?streamer+' | ':'')+(title||'SONG REQUEST');
+}
+function openHeaderTextEditor(){
+  $('#hEyebrow').value=room?.eyebrow_text??'LIVE SONG LIST';
+  $('#hTitle').value=room?.page_title??'SONG REQUEST';
+  $('#hStreamer').value=room?.display_name??'';
+  $('#hMessage').value=room?.hero_message??'';
+  $('#hCountLabel').value=room?.count_label??'songs';
+  close('admin');open('headertext');
+}
 async function load(){
   try{
-    let r=await fetch(URL+'/rest/v1/song_request_streamers?slug=eq.'+encodeURIComponent(SLUG)+'&active=eq.true&select=id,display_name,page_title,hero_message,theme,media',{headers:{apikey:KEY}});
+    let r=await fetch(URL+'/rest/v1/song_request_streamers?slug=eq.'+encodeURIComponent(SLUG)+'&active=eq.true&select=id,display_name,page_title,hero_message,eyebrow_text,count_label,theme,media',{headers:{apikey:KEY}});
     let a=await r.json();room=a[0];if(!room)throw Error('ROOM');
     room.theme=normalizeTheme(room.theme);room.media=normalizeMedia(room.media);applyTheme(room.theme);applyMedia(room.media);
-    $('#streamer').textContent=room.display_name;$('#pageTitle').textContent=room.page_title||'SONG REQUEST';$('#adminTitle').textContent=room.display_name+' 管理モード';
-    document.title=room.display_name+' | '+(room.page_title||'SONG REQUEST');
-    const m=room.hero_message||'あなたのリクエストが、この夜のステージをつくる。';$('#heroMessage').innerHTML=esc(m).replace('、','、<br>');
+    applyHeaderTexts();
+    $('#adminTitle').textContent=(room.display_name||'このルーム')+' 管理モード';
     r=await fetch(URL+'/rest/v1/song_request_songs?select=*&streamer_id=eq.'+room.id+'&active=eq.true&order=sort_order.asc,created_at.asc',{headers:{apikey:KEY}});
     songs=await r.json();renderArtistIndex();render()
   }catch(e){
@@ -570,7 +607,25 @@ $('#navSearch').onclick=()=>{$('#search').focus();scrollTo(0,0)};$('#secret').on
 
 $('#loginBtn').onclick=async()=>{try{let d=await call({action:'login',room:SLUG,password:$('#pw').value});token=d.token;sessionStorage.setItem(TOKKEY,token);$('#pw').value='';adminUI();toast('ログインしました')}catch(e){toast(e.message)}};
 $('#logoutBtn').onclick=async()=>{try{await call({action:'logout'})}catch{}token='';sessionStorage.removeItem(TOKKEY);adminUI();close('admin')};
-$('#addBtn').onclick=()=>{close('admin');edit(null)};$('#fab').onclick=()=>edit(null);$('#changePw').onclick=()=>{close('admin');open('pwchange')};$('#designBtn').onclick=openThemeEditor;
+$('#addBtn').onclick=()=>{close('admin');edit(null)};$('#fab').onclick=()=>edit(null);$('#changePw').onclick=()=>{close('admin');open('pwchange')};$('#designBtn').onclick=openThemeEditor;$('#headerTextBtn').onclick=openHeaderTextEditor;
+
+$('#headerTextSave').onclick=async()=>{
+  const header={
+    eyebrow_text:$('#hEyebrow').value.trim(),
+    page_title:$('#hTitle').value.trim(),
+    display_name:$('#hStreamer').value.trim(),
+    hero_message:$('#hMessage').value.trim(),
+    count_label:$('#hCountLabel').value.trim()
+  };
+  try{
+    const d=await call({action:'update_header',header});
+    room={...room,...(d.header||header)};
+    applyHeaderTexts();
+    $('#adminTitle').textContent=(room.display_name||'このルーム')+' 管理モード';
+    close('headertext');
+    toast('ヘッダー文字を保存しました');
+  }catch(e){toast(e.message)}
+};
 
 $('#themePresets').onclick=e=>{
   const b=e.target.closest('[data-preset]');if(!b)return;
