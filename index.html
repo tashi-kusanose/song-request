@@ -42,6 +42,11 @@ h1{margin:5px 0 0;font:500 clamp(34px,8.8vw,48px)/.94 Georgia,serif;letter-spaci
 .chip,.kana{flex:0 0 auto;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 88%,black);color:#bbb2c3;font-weight:850}
 .chip{height:38px;padding:0 14px;border-radius:999px;font-size:12px}.chip.active{color:#fff;border-color:transparent;background:linear-gradient(105deg,var(--accent),var(--accent2))}
 .kana{width:35px;height:34px;border-radius:10px;font-size:11px}.kana.active{color:#fff;border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 16%,var(--panel))}
+.artist-mode{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px;padding:4px;border:1px solid var(--line);border-radius:13px;background:color-mix(in srgb,var(--panel) 78%,black)}
+.artist-mode-btn{height:36px;border:0;border-radius:10px;background:transparent;color:#958d9d;font-size:11px;font-weight:900}
+.artist-mode-btn.active{color:#fff;background:linear-gradient(105deg,color-mix(in srgb,var(--accent) 78%,transparent),color-mix(in srgb,var(--accent2) 78%,transparent));box-shadow:0 4px 14px rgba(0,0,0,.18)}
+#kana.english-index{gap:6px}
+#kana.english-index .kana{width:34px}
 main{padding:6px 16px calc(98px + env(safe-area-inset-bottom))}
 .head{display:flex;justify-content:space-between;align-items:end;padding:8px 2px 10px}.head h2{font-size:14px;margin:0}.head span{font-size:11px;color:var(--muted)}
 .list{display:grid;gap:10px}
@@ -111,7 +116,7 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 <body>
 <div class="app" id="app">
 <section id="hero" class="hero"><img id="roomLogo" class="room-logo" alt=""><div class="eyebrow">LIVE SONG LIST</div><h1 id="pageTitle">SONG REQUEST</h1><div class="streamer-row"><img id="profileImg" class="profile-img" alt=""><div id="streamer" class="streamer">読み込み中…</div></div><p id="heroMessage">あなたのリクエストが、<br>この夜のステージをつくる。</p><div class="count">🎵 <b id="total">—</b> songs</div><div id="mic" class="mic">🎙️</div><button id="secret" class="secret" aria-label="その他">⋯</button></section>
-<section class="tools"><input id="search" class="search" placeholder="曲名・アーティスト名で検索"><div class="row" id="filters"><button class="chip active" data-f="all">すべて</button><button class="chip" data-f="original">オリジナル</button><button class="chip" data-f="recommend">おすすめ</button><button class="chip" data-f="popular">よく歌う</button><button class="chip" data-f="new">新曲</button><button class="chip" data-f="limited">▲注記あり</button><button class="chip" data-f="favorite">お気に入り</button></div><div class="row" id="kana"><button class="kana active" data-k="all">全</button><button class="kana" data-k="あ">あ</button><button class="kana" data-k="か">か</button><button class="kana" data-k="さ">さ</button><button class="kana" data-k="た">た</button><button class="kana" data-k="な">な</button><button class="kana" data-k="は">は</button><button class="kana" data-k="ま">ま</button><button class="kana" data-k="や">や</button><button class="kana" data-k="ら">ら</button><button class="kana" data-k="わ">わ</button><button class="kana" data-k="AZ">A-Z</button></div></section>
+<section class="tools"><input id="search" class="search" placeholder="曲名・アーティスト名で検索"><div class="row" id="filters"><button class="chip active" data-f="all">すべて</button><button class="chip" data-f="original">オリジナル</button><button class="chip" data-f="recommend">おすすめ</button><button class="chip" data-f="popular">よく歌う</button><button class="chip" data-f="new">新曲</button><button class="chip" data-f="limited">▲注記あり</button><button class="chip" data-f="favorite">お気に入り</button></div><div class="artist-mode" id="artistMode"><button class="artist-mode-btn active" data-mode="jp">日本語名</button><button class="artist-mode-btn" data-mode="en">英語名</button></div><div class="row" id="kana"></div></section>
 <main><div class="head"><h2 id="sectionTitle">歌える曲</h2><span id="resultCount"></span></div><div id="list" class="list"><div class="empty">読み込み中…</div></div></main>
 </div>
 <button id="fab" class="fab">＋ 曲を追加</button>
@@ -170,7 +175,7 @@ const URL='https://esfgrykcvdctnvdqipbj.supabase.co',KEY='sb_publishable_Rwb3qaR
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 function roomSlug(){const q=new URLSearchParams(location.search).get('room');return(q||'natsumi').trim().toLowerCase()}
 const SLUG=roomSlug(),TOKKEY='song_admin_'+SLUG,FAVKEY='song_fav_'+SLUG;
-let room=null,songs=[],selected=null,token=sessionStorage.getItem(TOKKEY)||'',state={f:'all',k:'all',q:''},themeDraft=null,inlineArtist='',popupArtist='',popupKana='all';
+let room=null,songs=[],selected=null,token=sessionStorage.getItem(TOKKEY)||'',state={f:'all',nameMode:'jp',k:'all',q:''},themeDraft=null,inlineArtist='',popupArtist='',popupKana='all';
 let fav=new Set(JSON.parse(localStorage.getItem(FAVKEY)||'[]'));
 
 const PRESETS={
@@ -300,7 +305,6 @@ function artistKey(s){
   return norm(s).replace(/['’`~～\\-‐‑–—・.]/g,'');
 }
 const ARTIST_KANA_OVERRIDES={
-  'larcenciel':'ら',
   '一青窈':'は',
   '中島美嘉':'な',
   '中森明菜':'な',
@@ -341,20 +345,43 @@ const ARTIST_KANA_OVERRIDES={
 function kanaRowFromChar(ch){
   const c=String(ch||'').normalize('NFKC');
   if(!c)return 'その他';
-  if(/^[A-Za-z0-9]/.test(c))return 'AZ';
   const hira=c.replace(/[ァ-ヶ]/g,x=>String.fromCharCode(x.charCodeAt(0)-0x60));
   const rows={あ:'あいうえおぁぃぅぇぉ',か:'かきくけこがぎぐげご',さ:'さしすせそざじずぜぞ',た:'たちつてとだぢづでどっ',な:'なにぬねの',は:'はひふへほばびぶべぼぱぴぷぺぽ',ま:'まみむめも',や:'やゆよゃゅょ',ら:'らりるれろ',わ:'わをん'};
   for(const [row,chars] of Object.entries(rows))if(chars.includes(hira))return row;
   return 'その他';
+}
+function isEnglishArtist(artist){
+  return /^[A-Za-z0-9]/.test(String(artist||'').trim());
 }
 function artistKanaRow(artist){
   const key=artistKey(artist);
   if(ARTIST_KANA_OVERRIDES[key])return ARTIST_KANA_OVERRIDES[key];
   return kanaRowFromChar(String(artist||'').trim().charAt(0));
 }
-function artistMatchesKana(artist,k){
-  if(k==='all')return true;
-  return artistKanaRow(artist)===k;
+function englishInitial(artist){
+  const m=String(artist||'').trim().toUpperCase().match(/[A-Z]/);
+  return m?m[0]:'#';
+}
+function artistMatchesTopIndex(artist){
+  if(state.nameMode==='en'){
+    if(!isEnglishArtist(artist))return false;
+    return state.k==='all'||englishInitial(artist)===state.k;
+  }
+  if(isEnglishArtist(artist))return false;
+  return state.k==='all'||artistKanaRow(artist)===state.k;
+}
+function renderArtistIndex(){
+  const kana=$('#kana');
+  if(state.nameMode==='en'){
+    const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    kana.classList.add('english-index');
+    kana.innerHTML='<button class="kana '+(state.k==='all'?'active':'')+'" data-k="all">ALL</button>'+letters.map(x=>'<button class="kana '+(state.k===x?'active':'')+'" data-k="'+x+'">'+x+'</button>').join('');
+  }else{
+    const rows=[['all','全'],['あ','あ'],['か','か'],['さ','さ'],['た','た'],['な','な'],['は','は'],['ま','ま'],['や','や'],['ら','ら'],['わ','わ']];
+    kana.classList.remove('english-index');
+    kana.innerHTML=rows.map(([k,label])=>'<button class="kana '+(state.k===k?'active':'')+'" data-k="'+k+'">'+label+'</button>').join('');
+  }
+  $$('#artistMode [data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===state.nameMode));
 }
 function arr(){
   const q=norm(state.q);
@@ -369,7 +396,7 @@ function arr(){
     return(!q||norm(s.title+s.artist+s.note).includes(q))&&f;
   });
 }
-const JA_COLLATOR=new Intl.Collator('ja',{numeric:true,sensitivity:'base'});
+const JA_COLLATOR=new Intl.Collator('ja',{numeric:true,sensitivity:'base'});const EN_COLLATOR=new Intl.Collator('en',{numeric:true,sensitivity:'base'});
 const KANA_DETAIL=['オリジナル','あ','い','う','え','お','か','き','く','け','こ','さ','し','す','せ','そ','た','ち','つ','て','と','な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ','ま','み','む','め','も','や','ゆ','よ','ら','り','る','れ','ろ','わ','を','ん','その他'];
 function songSort(a,b){
   const ai=KANA_DETAIL.indexOf(a.kana_group),bi=KANA_DETAIL.indexOf(b.kana_group);
@@ -383,7 +410,7 @@ function artistGroups(list){
     if(!map.has(artist))map.set(artist,[]);
     map.get(artist).push(s);
   }
-  return [...map.entries()].map(([artist,items])=>({artist,songs:items.sort(songSort)})).sort((a,b)=>JA_COLLATOR.compare(a.artist,b.artist));
+  return [...map.entries()].map(([artist,items])=>({artist,songs:items.sort(songSort)})).sort((a,b)=>isEnglishArtist(a.artist)&&isEnglishArtist(b.artist)?EN_COLLATOR.compare(a.artist,b.artist):JA_COLLATOR.compare(a.artist,b.artist));
 }
 function artistTotal(artist){return songs.reduce((n,s)=>n+(s.artist===artist?1:0),0)}
 function songTags(s){
@@ -397,7 +424,7 @@ function songLine(s){
   return '<div class="songline"><div><div class="songline-title">'+esc(s.title)+'</div><div class="songline-sub">'+songTags(s)+'</div></div><div class="songline-acts"><button class="fav '+(fav.has(s.id)?'on':'')+'" data-fav="'+s.id+'" aria-label="お気に入り">♥</button><button class="edit" data-edit="'+s.id+'" aria-label="編集">✎</button><button class="req" data-req="'+s.id+'">リクエスト</button></div></div>';
 }
 function render(){
-  const a=arr(),allGroups=artistGroups(a),groups=allGroups.filter(g=>artistMatchesKana(g.artist,state.k));
+  const a=arr(),allGroups=artistGroups(a),groups=state.q.trim()?allGroups:allGroups.filter(g=>artistMatchesTopIndex(g.artist));
   const shownSongCount=groups.reduce((n,g)=>n+g.songs.length,0);
   $('#total').textContent=songs.length;
   $('#resultCount').textContent=groups.length+'組 / '+shownSongCount+'曲';
@@ -433,8 +460,9 @@ async function call(p){
 function edit(s){$('#songId').value=s?.id||'';$('#editTitle').textContent=s?'曲を編集':'曲を追加';$('#fTitle').value=s?.title||'';$('#fArtist').value=s?.artist||'';$('#fKana').value=s?.kana_group||'あ';$('#fNote').value=s?.note||'';$('#fOriginal').checked=s?.category==='original';$('#fLimited').checked=!!s?.limited;$('#fRecommend').checked=!!s?.recommend;$('#fPopular').checked=!!s?.popular;$('#fNew').checked=!!s?.is_new;$('#fActive').checked=s?.active!==false;$('#deleteBtn').style.display=s?'block':'none';open('edit')}
 
 $('#search').oninput=e=>{state.q=e.target.value;inlineArtist='';render()};
-$('#filters').onclick=e=>{let b=e.target.closest('[data-f]');if(!b)return;state.f=b.dataset.f;inlineArtist='';$$('[data-f]').forEach(x=>x.classList.toggle('active',x===b));render()};
-$('#kana').onclick=e=>{let b=e.target.closest('[data-k]');if(!b)return;state.k=b.dataset.k;inlineArtist='';$$('[data-k]').forEach(x=>x.classList.toggle('active',x===b));render()};
+$('#filters').onclick=e=>{let b=e.target.closest('[data-f]');if(!b)return;state.f=b.dataset.f;inlineArtist='';$('[data-f]').forEach(x=>x.classList.toggle('active',x===b));render()};
+$('#artistMode').onclick=e=>{const b=e.target.closest('[data-mode]');if(!b||b.dataset.mode===state.nameMode)return;state.nameMode=b.dataset.mode;state.k='all';inlineArtist='';renderArtistIndex();render()};
+$('#kana').onclick=e=>{let b=e.target.closest('[data-k]');if(!b)return;state.k=b.dataset.k;inlineArtist='';$('#kana [data-k]').forEach(x=>x.classList.toggle('active',x===b));render()};
 function handleSongAction(e){
   let b=e.target.closest('[data-fav]');
   if(b){let id=b.dataset.fav;fav.has(id)?fav.delete(id):fav.add(id);localStorage.setItem(FAVKEY,JSON.stringify([...fav]));render();if(popupArtist)renderArtistPopup();return true}
@@ -496,6 +524,6 @@ $('#saveBtn').onclick=async()=>{
 $('#deleteBtn').onclick=async()=>{let id=$('#songId').value;if(!confirm('この曲を削除しますか？'))return;try{await call({action:'delete',id});close('edit');await load();toast('削除しました')}catch(e){toast(e.message)}};
 $('#savePw').onclick=async()=>{let a=$('#newPw').value,b=$('#newPw2').value;if(a.length<6||a!==b)return toast('6文字以上で同じPWを入力してください');try{await call({action:'change_password',new_password:a});close('pwchange');toast('PWを変更しました')}catch(e){toast(e.message)}};
 
-adminUI();load();
+renderArtistIndex();adminUI();load();
 </script>
 </body></html>
