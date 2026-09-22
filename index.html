@@ -296,6 +296,12 @@ function km(g,k){
   const m={あ:'あいうえお',か:'かきくけこ',さ:'さしすせそ',た:'たちつてと',な:'なにぬねの',は:'はひふへほ',ま:'まみむめも',や:'やゆよ',ら:'らりるれろ',わ:'わをん'};
   return(m[k]||'').includes(g.kana_group);
 }
+function artistKey(s){
+  return norm(s).replace(/['’`~～\\-‐‑–—・.]/g,'');
+}
+function isLeiraLarcArtist(artist){
+  return SLUG==='leira'&&artistKey(artist)==='larcenciel';
+}
 function arr(){
   const q=norm(state.q);
   return songs.filter(s=>{
@@ -306,7 +312,8 @@ function arr(){
     if(state.f==='new')f=s.is_new;
     if(state.f==='limited')f=s.limited;
     if(state.f==='favorite')f=fav.has(s.id);
-    return(!q||norm(s.title+s.artist+s.note).includes(q))&&f&&km(s,state.k);
+    const kanaOk=isLeiraLarcArtist(s.artist)?(state.k==='all'||state.k==='ら'):km(s,state.k);
+    return(!q||norm(s.title+s.artist+s.note).includes(q))&&f&&kanaOk;
   });
 }
 const JA_COLLATOR=new Intl.Collator('ja',{numeric:true,sensitivity:'base'});
