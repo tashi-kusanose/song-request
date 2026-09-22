@@ -74,6 +74,7 @@ main{padding:6px 16px calc(98px + env(safe-area-inset-bottom))}
 .artist-pop-head h3{font-size:20px;margin:4px 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .artist-pop-count{font-size:10px;color:var(--muted);text-align:center}
 .artist-close{position:absolute;right:0;top:6px;width:38px;height:38px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--panel) 85%,black);color:#d9d2df;font-size:20px}
+.artist-song-mode{flex:0 0 auto;margin:0 0 2px}
 .artist-kana{flex:0 0 auto;margin:0 -2px 10px;padding:8px 2px;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(12px)}
 .artist-popup-list{display:grid;gap:7px;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 1px 12px}
 .artist-empty{text-align:center;padding:42px 12px;color:var(--muted);font-size:11px}
@@ -129,7 +130,8 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 
 <div id="artistPopup" class="overlay artist-popup"><div class="sheet">
   <div class="artist-pop-head"><div><div class="eyebrow">ARTIST SONGS</div><h3 id="artistPopupTitle"></h3><div id="artistPopupCount" class="artist-pop-count"></div></div><button id="artistPopupClose" class="artist-close" aria-label="閉じる">×</button></div>
-  <div id="artistPopupKana" class="row artist-kana"><button class="kana active" data-pk="all">全</button><button class="kana" data-pk="あ">あ</button><button class="kana" data-pk="か">か</button><button class="kana" data-pk="さ">さ</button><button class="kana" data-pk="た">た</button><button class="kana" data-pk="な">な</button><button class="kana" data-pk="は">は</button><button class="kana" data-pk="ま">ま</button><button class="kana" data-pk="や">や</button><button class="kana" data-pk="ら">ら</button><button class="kana" data-pk="わ">わ</button><button class="kana" data-pk="AZ">A-Z</button></div>
+  <div class="artist-mode artist-song-mode" id="artistSongMode"><button class="artist-mode-btn active" data-song-mode="jp">日本語名</button><button class="artist-mode-btn" data-song-mode="en">英語名</button></div>
+  <div id="artistPopupKana" class="row artist-kana"></div>
   <div id="artistPopupList" class="artist-popup-list"></div>
 </div></div>
 
@@ -176,7 +178,7 @@ const URL='https://esfgrykcvdctnvdqipbj.supabase.co',KEY='sb_publishable_Rwb3qaR
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 function roomSlug(){const q=new URLSearchParams(location.search).get('room');return(q||'natsumi').trim().toLowerCase()}
 const SLUG=roomSlug(),TOKKEY='song_admin_'+SLUG,FAVKEY='song_fav_'+SLUG;
-let room=null,songs=[],selected=null,token=sessionStorage.getItem(TOKKEY)||'',state={f:'all',nameMode:'jp',k:'all',q:''},themeDraft=null,inlineArtist='',popupArtist='',popupKana='all';
+let room=null,songs=[],selected=null,token=sessionStorage.getItem(TOKKEY)||'',state={f:'all',nameMode:'jp',k:'all',q:''},themeDraft=null,inlineArtist='',popupArtist='',popupNameMode='jp',popupKana='all';
 let fav=new Set(JSON.parse(localStorage.getItem(FAVKEY)||'[]'));
 
 const PRESETS={
@@ -388,7 +390,7 @@ function renderArtistIndex(){
     kana.classList.remove('english-index');
     kana.innerHTML=rows.map(([k,label])=>'<button class="kana '+(state.k===k?'active':'')+'" data-k="'+k+'">'+label+'</button>').join('');
   }
-  $('#artistMode [data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===state.nameMode));
+  document.querySelectorAll('#artistMode [data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===state.nameMode));
 }
 function arr(){
   const q=norm(state.q);
@@ -445,18 +447,55 @@ function render(){
   }).join(''):'<div class="empty">曲が見つかりませんでした</div>';
   if(popupArtist&&$('#artistPopup').classList.contains('show'))renderArtistPopup();
 }
+function isEnglishSongTitle(title){
+  return /^[A-Za-z0-9]/.test(String(title||'').trim());
+}
+function songEnglishInitial(title){
+  const m=String(title||'').trim().toUpperCase().match(/[A-Z]/);
+  return m?m[0]:'#';
+}
+function popupBaseSongs(){
+  return arr().filter(s=>s.artist===popupArtist).sort(songSort);
+}
+function renderArtistPopupIndex(base){
+  const nav=$('#artistPopupKana');
+  if(popupNameMode==='en'){
+    const available=new Set(base.filter(s=>isEnglishSongTitle(s.title)).map(s=>songEnglishInitial(s.title)).filter(x=>/^[A-Z]$/.test(x)));
+    const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter(x=>available.has(x));
+    if(popupKana!=='all'&&!available.has(popupKana))popupKana='all';
+    nav.classList.add('english-index');
+    nav.innerHTML='<button class="kana '+(popupKana==='all'?'active':'')+'" data-pk="all">ALL</button>'+letters.map(x=>'<button class="kana '+(popupKana===x?'active':'')+'" data-pk="'+x+'">'+x+'</button>').join('');
+  }else{
+    const allRows=[['あ','あ'],['か','か'],['さ','さ'],['た','た'],['な','な'],['は','は'],['ま','ま'],['や','や'],['ら','ら'],['わ','わ']];
+    const available=new Set(allRows.filter(([k])=>base.some(s=>!isEnglishSongTitle(s.title)&&km(s,k))).map(([k])=>k));
+    const rows=[['all','全'],...allRows.filter(([k])=>available.has(k))];
+    if(popupKana!=='all'&&!available.has(popupKana))popupKana='all';
+    nav.classList.remove('english-index');
+    nav.innerHTML=rows.map(([k,label])=>'<button class="kana '+(popupKana===k?'active':'')+'" data-pk="'+k+'">'+label+'</button>').join('');
+  }
+  document.querySelectorAll('#artistSongMode [data-song-mode]').forEach(b=>b.classList.toggle('active',b.dataset.songMode===popupNameMode));
+}
 function openArtistPopup(artist){
-  popupArtist=artist;popupKana='all';
-  $$('#artistPopupKana [data-pk]').forEach(b=>b.classList.toggle('active',b.dataset.pk==='all'));
-  renderArtistPopup();open('artistPopup');
+  popupArtist=artist;
+  popupNameMode='jp';
+  popupKana='all';
+  const base=popupBaseSongs();
+  renderArtistPopupIndex(base);
+  renderArtistPopup();
+  open('artistPopup');
 }
 function renderArtistPopup(){
   if(!popupArtist)return;
-  const base=arr().filter(s=>s.artist===popupArtist).sort(songSort);
-  const shown=popupKana==='all'?base:base.filter(s=>km(s,popupKana));
+  const base=popupBaseSongs();
+  const modeSongs=popupNameMode==='en'?base.filter(s=>isEnglishSongTitle(s.title)):base.filter(s=>!isEnglishSongTitle(s.title));
+  const shown=popupKana==='all'?modeSongs:(
+    popupNameMode==='en'
+      ?modeSongs.filter(s=>songEnglishInitial(s.title)===popupKana)
+      :modeSongs.filter(s=>km(s,popupKana))
+  );
   $('#artistPopupTitle').textContent=popupArtist;
-  $('#artistPopupCount').textContent=shown.length===base.length?(base.length+'曲'):(shown.length+'曲 / 全'+base.length+'曲');
-  $('#artistPopupList').innerHTML=shown.length?shown.map(songLine).join(''):'<div class="artist-empty">この行の曲はありません</div>';
+  $('#artistPopupCount').textContent=shown.length+'曲 / 全'+base.length+'曲';
+  $('#artistPopupList').innerHTML=shown.length?shown.map(songLine).join(''):'<div class="artist-empty">該当する曲はありません</div>';
 }
 function adminUI(){document.body.classList.toggle('admin',!!token);$('#login').hidden=!!token;$('#menu').hidden=!token}
 async function call(p){
@@ -487,10 +526,17 @@ $('#list').onclick=e=>{
   inlineArtist=inlineArtist===artist?'':artist;render();
 };
 $('#artistPopupList').onclick=e=>{handleSongAction(e)};
+$('#artistSongMode').onclick=e=>{
+  const b=e.target.closest('[data-song-mode]');if(!b||b.dataset.songMode===popupNameMode)return;
+  popupNameMode=b.dataset.songMode;popupKana='all';
+  const base=popupBaseSongs();
+  renderArtistPopupIndex(base);
+  renderArtistPopup();
+};
 $('#artistPopupKana').onclick=e=>{
   const b=e.target.closest('[data-pk]');if(!b)return;
   popupKana=b.dataset.pk;
-  $$('#artistPopupKana [data-pk]').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('#artistPopupKana [data-pk]').forEach(x=>x.classList.toggle('active',x===b));
   renderArtistPopup();
 };
 $('#artistPopupClose').onclick=()=>{popupArtist='';close('artistPopup')};
@@ -531,6 +577,6 @@ $('#saveBtn').onclick=async()=>{
 $('#deleteBtn').onclick=async()=>{let id=$('#songId').value;if(!confirm('この曲を削除しますか？'))return;try{await call({action:'delete',id});close('edit');await load();toast('削除しました')}catch(e){toast(e.message)}};
 $('#savePw').onclick=async()=>{let a=$('#newPw').value,b=$('#newPw2').value;if(a.length<6||a!==b)return toast('6文字以上で同じPWを入力してください');try{await call({action:'change_password',new_password:a});close('pwchange');toast('PWを変更しました')}catch(e){toast(e.message)}};
 
-renderArtistIndex();adminUI();load();
+adminUI();load();
 </script>
 </body></html>
