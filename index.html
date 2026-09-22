@@ -299,8 +299,33 @@ function km(g,k){
 function artistKey(s){
   return norm(s).replace(/['’`~～\\-‐‑–—・.]/g,'');
 }
-function isLeiraLarcArtist(artist){
-  return SLUG==='leira'&&artistKey(artist)==='larcenciel';
+const ARTIST_KANA_OVERRIDES={
+  'larcenciel':'ら',
+  '久保田利伸':'か',
+  '倖田來未':'か',
+  '中森明菜':'な',
+  '安室奈美恵':'あ',
+  '新垣結衣':'あ',
+  '松浦亜弥':'ま',
+  '浜崎あゆみ':'は'
+};
+function kanaRowFromChar(ch){
+  const c=String(ch||'').normalize('NFKC');
+  if(!c)return 'その他';
+  if(/^[A-Za-z0-9]/.test(c))return 'AZ';
+  const hira=c.replace(/[ァ-ヶ]/g,x=>String.fromCharCode(x.charCodeAt(0)-0x60));
+  const rows={あ:'あいうえおぁぃぅぇぉ',か:'かきくけこがぎぐげご',さ:'さしすせそざじずぜぞ',た:'たちつてとだぢづでどっ',な:'なにぬねの',は:'はひふへほばびぶべぼぱぴぷぺぽ',ま:'まみむめも',や:'やゆよゃゅょ',ら:'らりるれろ',わ:'わをん'};
+  for(const [row,chars] of Object.entries(rows))if(chars.includes(hira))return row;
+  return 'その他';
+}
+function artistKanaRow(artist){
+  const key=artistKey(artist);
+  if(ARTIST_KANA_OVERRIDES[key])return ARTIST_KANA_OVERRIDES[key];
+  return kanaRowFromChar(String(artist||'').trim().charAt(0));
+}
+function artistMatchesKana(artist,k){
+  if(k==='all')return true;
+  return artistKanaRow(artist)===k;
 }
 function arr(){
   const q=norm(state.q);
@@ -312,8 +337,7 @@ function arr(){
     if(state.f==='new')f=s.is_new;
     if(state.f==='limited')f=s.limited;
     if(state.f==='favorite')f=fav.has(s.id);
-    const kanaOk=isLeiraLarcArtist(s.artist)?(state.k==='all'||state.k==='ら'):km(s,state.k);
-    return(!q||norm(s.title+s.artist+s.note).includes(q))&&f&&kanaOk;
+    return(!q||norm(s.title+s.artist+s.note).includes(q))&&f;
   });
 }
 const JA_COLLATOR=new Intl.Collator('ja',{numeric:true,sensitivity:'base'});
@@ -344,9 +368,10 @@ function songLine(s){
   return '<div class="songline"><div><div class="songline-title">'+esc(s.title)+'</div><div class="songline-sub">'+songTags(s)+'</div></div><div class="songline-acts"><button class="fav '+(fav.has(s.id)?'on':'')+'" data-fav="'+s.id+'" aria-label="お気に入り">♥</button><button class="edit" data-edit="'+s.id+'" aria-label="編集">✎</button><button class="req" data-req="'+s.id+'">リクエスト</button></div></div>';
 }
 function render(){
-  const a=arr(),groups=artistGroups(a);
+  const a=arr(),allGroups=artistGroups(a),groups=allGroups.filter(g=>artistMatchesKana(g.artist,state.k));
+  const shownSongCount=groups.reduce((n,g)=>n+g.songs.length,0);
   $('#total').textContent=songs.length;
-  $('#resultCount').textContent=groups.length+'組 / '+a.length+'曲';
+  $('#resultCount').textContent=groups.length+'組 / '+shownSongCount+'曲';
   const lab={all:'アーティストから探す',original:'オリジナル曲',recommend:'おすすめ',popular:'よく歌う曲',new:'新曲',limited:'▲注記あり',favorite:'お気に入り'};
   $('#sectionTitle').textContent=lab[state.f]||'アーティストから探す';
   $('#list').className='artist-list';
