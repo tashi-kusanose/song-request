@@ -461,9 +461,9 @@ async function call(p){
 function edit(s){$('#songId').value=s?.id||'';$('#editTitle').textContent=s?'曲を編集':'曲を追加';$('#fTitle').value=s?.title||'';$('#fArtist').value=s?.artist||'';$('#fKana').value=s?.kana_group||'あ';$('#fNote').value=s?.note||'';$('#fOriginal').checked=s?.category==='original';$('#fLimited').checked=!!s?.limited;$('#fRecommend').checked=!!s?.recommend;$('#fPopular').checked=!!s?.popular;$('#fNew').checked=!!s?.is_new;$('#fActive').checked=s?.active!==false;$('#deleteBtn').style.display=s?'block':'none';open('edit')}
 
 $('#search').oninput=e=>{state.q=e.target.value;inlineArtist='';render()};
-$('#filters').onclick=e=>{let b=e.target.closest('[data-f]');if(!b)return;state.f=b.dataset.f;inlineArtist='';$('#filters [data-f]').forEach(x=>x.classList.toggle('active',x===b));render()};
+$('#filters').onclick=e=>{let b=e.target.closest('[data-f]');if(!b)return;state.f=b.dataset.f;inlineArtist='';$$('#filters [data-f]').forEach(x=>x.classList.toggle('active',x===b));render()};
 $('#artistMode').onclick=e=>{const b=e.target.closest('[data-mode]');if(!b||b.dataset.mode===state.nameMode)return;state.nameMode=b.dataset.mode;state.k='all';inlineArtist='';renderArtistIndex();render()};
-$('#kana').onclick=e=>{let b=e.target.closest('[data-k]');if(!b)return;state.k=b.dataset.k;inlineArtist='';$('#kana [data-k]').forEach(x=>x.classList.toggle('active',x===b));render()};
+$('#kana').onclick=e=>{let b=e.target.closest('[data-k]');if(!b)return;state.k=b.dataset.k;inlineArtist='';$$('#kana [data-k]').forEach(x=>x.classList.toggle('active',x===b));render()};
 function handleSongAction(e){
   let b=e.target.closest('[data-fav]');
   if(b){let id=b.dataset.fav;fav.has(id)?fav.delete(id):fav.add(id);localStorage.setItem(FAVKEY,JSON.stringify([...fav]));render();if(popupArtist)renderArtistPopup();return true}
@@ -491,7 +491,7 @@ $('#artistPopupClose').onclick=()=>{popupArtist='';close('artistPopup')};
 $('#artistPopup').onclick=e=>{if(e.target===$('#artistPopup')){popupArtist='';close('artistPopup')}};
 $('#copyBtn').onclick=async()=>{await navigator.clipboard.writeText($('#copyText').textContent).catch(()=>{});close('request');toast('コピーしました')};
 $$('[data-close]').forEach(b=>b.onclick=()=>close(b.dataset.close));
-$('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o&&o.id!=='theme'&&o.id!=='artistPopup')o.classList.remove('show')});
+$$('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o&&o.id!=='theme'&&o.id!=='artistPopup')o.classList.remove('show')});
 $$('[data-nav]').forEach(b=>b.onclick=()=>{state.f=b.dataset.nav;inlineArtist='';$$('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render();scrollTo(0,0)});
 $('#navSearch').onclick=()=>{$('#search').focus();scrollTo(0,0)};$('#secret').onclick=()=>{adminUI();open('admin')};
 
