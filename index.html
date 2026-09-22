@@ -291,7 +291,7 @@ async function load(){
     document.title=room.display_name+' | '+(room.page_title||'SONG REQUEST');
     const m=room.hero_message||'あなたのリクエストが、この夜のステージをつくる。';$('#heroMessage').innerHTML=esc(m).replace('、','、<br>');
     r=await fetch(URL+'/rest/v1/song_request_songs?select=*&streamer_id=eq.'+room.id+'&active=eq.true&order=sort_order.asc,created_at.asc',{headers:{apikey:KEY}});
-    songs=await r.json();render()
+    songs=await r.json();renderArtistIndex();render()
   }catch(e){
     $('#total').textContent='0';$('#streamer').textContent='このルームは利用できません';$('#list').innerHTML='<div class="empty">歌リストが見つかりません<br>URLをご確認ください。</div>';$('#secret').style.display='none'
   }
@@ -373,16 +373,22 @@ function artistMatchesTopIndex(artist){
 }
 function renderArtistIndex(){
   const kana=$('#kana');
+  const artists=[...new Set(songs.map(s=>String(s.artist||'').trim()).filter(Boolean))];
   if(state.nameMode==='en'){
-    const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const available=new Set(artists.filter(isEnglishArtist).map(englishInitial).filter(x=>/^[A-Z]$/.test(x)));
+    const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter(x=>available.has(x));
+    if(state.k!=='all'&&!available.has(state.k))state.k='all';
     kana.classList.add('english-index');
     kana.innerHTML='<button class="kana '+(state.k==='all'?'active':'')+'" data-k="all">ALL</button>'+letters.map(x=>'<button class="kana '+(state.k===x?'active':'')+'" data-k="'+x+'">'+x+'</button>').join('');
   }else{
-    const rows=[['all','全'],['あ','あ'],['か','か'],['さ','さ'],['た','た'],['な','な'],['は','は'],['ま','ま'],['や','や'],['ら','ら'],['わ','わ']];
+    const available=new Set(artists.filter(a=>!isEnglishArtist(a)).map(artistKanaRow).filter(x=>x!=='その他'));
+    const allRows=[['あ','あ'],['か','か'],['さ','さ'],['た','た'],['な','な'],['は','は'],['ま','ま'],['や','や'],['ら','ら'],['わ','わ']];
+    const rows=[['all','全'],...allRows.filter(([k])=>available.has(k))];
+    if(state.k!=='all'&&!available.has(state.k))state.k='all';
     kana.classList.remove('english-index');
     kana.innerHTML=rows.map(([k,label])=>'<button class="kana '+(state.k===k?'active':'')+'" data-k="'+k+'">'+label+'</button>').join('');
   }
-  $$('#artistMode [data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===state.nameMode));
+  $('#artistMode [data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===state.nameMode));
 }
 function arr(){
   const q=norm(state.q);
