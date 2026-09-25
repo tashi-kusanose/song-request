@@ -11,9 +11,9 @@
 button,input{font:inherit}.wrap{width:min(100%,760px);margin:auto;padding:18px 16px 80px}.top{position:sticky;top:0;z-index:4;margin:-18px -16px 14px;padding:16px;background:linear-gradient(180deg,rgba(7,11,20,.98) 78%,rgba(7,11,20,.82));backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .eyebrow{font-size:10px;letter-spacing:.24em;color:#9db0c8;font-weight:900}.title{font-size:24px;font-weight:950;margin:5px 0}.room{font-size:13px;color:var(--accent);font-weight:900}.statusline{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.pill{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--line);border-radius:999px;font-size:10px;color:var(--muted);background:rgba(255,255,255,.025)}.dot{width:7px;height:7px;border-radius:50%;background:#64748b}.dot.on{background:var(--ok);box-shadow:0 0 10px var(--ok)}
 .accept-toggle{width:100%;height:50px;margin-top:12px;border-radius:14px;border:1px solid rgba(53,208,127,.35);font-weight:950;color:#a7f3c8;background:rgba(53,208,127,.10)}.accept-toggle.off{color:#ffc1c7;background:rgba(255,107,122,.10);border-color:rgba(255,107,122,.32)}.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 14px}.btn{height:44px;border:0;border-radius:12px;font-weight:900}.primary{color:white;background:linear-gradient(105deg,var(--accent),var(--accent2))}.ghost{color:#d8deea;background:#121b2b;border:1px solid var(--line)}.danger{color:#ffc2ca;background:rgba(255,107,122,.10);border:1px solid rgba(255,107,122,.25)}
-.section{margin-top:18px}.sectionhead{display:flex;justify-content:space-between;align-items:end;margin-bottom:9px}.sectionhead h2{font-size:16px;margin:0}.count{font-size:10px;color:var(--muted)}
+.section{margin-top:18px}.sectionhead{display:flex;justify-content:space-between;align-items:end;margin-bottom:9px}.sectionhead h2{font-size:16px;margin:0}.count{font-size:10px;color:var(--muted)}.history-tools{display:flex;align-items:center;gap:8px}.clear-history{height:30px;padding:0 9px;border-radius:9px;border:1px solid rgba(255,107,122,.28);background:rgba(255,107,122,.08);color:#ffb2bb;font-size:9px;font-weight:900}.clear-history:disabled{opacity:.35}
 .queue{display:grid;gap:8px}.card{border:1px solid var(--line);border-radius:16px;padding:12px;background:linear-gradient(180deg,rgba(17,26,43,.98),rgba(12,19,31,.98));box-shadow:0 10px 30px rgba(0,0,0,.18)}.card.next{border-color:rgba(56,189,248,.55);box-shadow:0 0 0 1px rgba(56,189,248,.10),0 12px 32px rgba(0,0,0,.2)}.card.done,.card.skipped{opacity:.7}.song{font-size:15px;font-weight:950;line-height:1.35}.artist{font-size:11px;color:var(--muted);margin-top:3px}.meta{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:9px;font-size:10px;color:#96a0b1}.who{font-weight:850;color:#cbd4e1}.tag{display:inline-flex;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:900}.tag.new{background:rgba(255,189,74,.13);color:#ffd27b}.tag.next{background:rgba(56,189,248,.14);color:#8edcff}.tag.done{background:rgba(53,208,127,.12);color:#7ce6ab}.tag.skipped{background:rgba(255,107,122,.10);color:#ffa8b2}
-.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}.actions button{height:38px;border-radius:10px;border:1px solid var(--line);font-size:10px;font-weight:900;background:#111b2b;color:#dfe7f2}.actions .nextbtn{color:#98e2ff;border-color:rgba(56,189,248,.3)}.actions .donebtn{color:#8de4b4;border-color:rgba(53,208,127,.3)}.actions .skipbtn{color:#ffb2bb;border-color:rgba(255,107,122,.28)}
+.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}.actions button{height:38px;border-radius:10px;border:1px solid var(--line);font-size:10px;font-weight:900;background:#111b2b;color:#dfe7f2}.actions .nextbtn{color:#98e2ff;border-color:rgba(56,189,248,.3)}.actions .donebtn{color:#8de4b4;border-color:rgba(53,208,127,.3)}.actions .skipbtn{color:#ffb2bb;border-color:rgba(255,107,122,.28)}.actions .deletebtn{color:#ffb2bb;border-color:rgba(255,107,122,.28);background:rgba(255,107,122,.07)}
 .empty{padding:44px 14px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted);font-size:12px}.loginbox{margin:80px auto 0;max-width:430px;padding:18px;border:1px solid var(--line);border-radius:18px;background:#101827}.loginbox h2{margin:0 0 5px}.sub{font-size:11px;color:var(--muted);line-height:1.6}.input{width:100%;height:46px;margin-top:10px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:#0b1220;color:white;outline:none}.loginbox .btn{width:100%;margin-top:10px}.toast{position:fixed;z-index:10;left:50%;bottom:20px;transform:translate(-50%,12px);opacity:0;pointer-events:none;width:min(calc(100% - 30px),520px);padding:11px 13px;border-radius:13px;background:#182236;border:1px solid var(--line);color:#fff;font-size:11px;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
 @media(max-width:520px){.wrap{padding-left:10px;padding-right:10px}.top{margin-left:-10px;margin-right:-10px}.actions{grid-template-columns:1fr 1fr}.actions button:last-child{grid-column:1/-1}.title{font-size:21px}}
 </style>
@@ -50,7 +50,7 @@ button,input{font:inherit}.wrap{width:min(100%,760px);margin:auto;padding:18px 1
     </section>
 
     <section class="section">
-      <div class="sectionhead"><h2>対応履歴</h2><div id="historyCount" class="count">0件</div></div>
+      <div class="sectionhead"><h2>対応履歴</h2><div class="history-tools"><div id="historyCount" class="count">0件</div><button id="clearHistoryBtn" class="clear-history" disabled>履歴を全削除</button></div></div>
       <div id="history" class="queue"></div>
     </section>
   </main>
@@ -109,7 +109,7 @@ function statusLabel(s){return s==='next'?'次に歌う':s==='done'?'歌唱済�
 function card(r){
   const who=r.requester_name?'<span class="who">'+esc(r.requester_name)+'さん</span>':'<span class="who">名前なし</span>';
   const actions=(r.status==='done'||r.status==='skipped')
-    ?'<div class="actions"><button data-status="new" data-id="'+r.id+'">未対応に戻す</button></div>'
+    ?'<div class="actions"><button data-status="new" data-id="'+r.id+'">未対応に戻す</button><button class="deletebtn" data-delete-history="'+r.id+'" data-song="'+esc(r.song_title)+'">削除</button></div>'
     :'<div class="actions"><button class="nextbtn" data-status="next" data-id="'+r.id+'">次に歌う</button><button class="donebtn" data-status="done" data-id="'+r.id+'">歌唱済み</button><button class="skipbtn" data-status="skipped" data-id="'+r.id+'">スキップ</button></div>';
   return '<article class="card '+r.status+'"><div class="song">'+esc(r.song_title)+'</div><div class="artist">'+esc(r.artist)+'</div><div class="meta"><div>'+who+' ・ '+fmtTime(r.created_at)+'</div><span class="tag '+r.status+'">'+statusLabel(r.status)+'</span></div>'+actions+'</article>'
 }
@@ -126,6 +126,7 @@ function render(){
   const history=requests.filter(r=>r.status==='done'||r.status==='skipped').sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at)).slice(0,40);
   $('#pendingCount').textContent=pending.length+'件';
   $('#historyCount').textContent=history.length+'件';
+  $('#clearHistoryBtn').disabled=history.length===0;
   $('#pending').innerHTML=pending.length?pending.map(card).join(''):'<div class="empty">現在、受付中のリクエストはありません。</div>';
   $('#history').innerHTML=history.length?history.map(card).join(''):'<div class="empty">対応履歴はまだありません。</div>';
 }
@@ -167,7 +168,27 @@ async function updateStatus(id,status){
     await call({action:'update_request',id,status});await refresh()
   }catch(e){toast(e.message)}
 }
+async function deleteHistoryOne(id,song){
+  if(!confirm('「'+song+'」の対応履歴を削除しますか？'))return;
+  try{
+    await call({action:'delete_request_history',id});
+    await refresh();
+    toast('対応履歴を削除しました');
+  }catch(e){toast(e.message)}
+}
+async function clearHistory(){
+  const historyCount=requests.filter(r=>r.status==='done'||r.status==='skipped').length;
+  if(!historyCount)return;
+  if(!confirm('対応履歴 '+historyCount+'件をすべて削除しますか？\nこの操作は元に戻せません。'))return;
+  try{
+    const d=await call({action:'clear_request_history'});
+    await refresh();
+    toast((d.deleted||0)+'件の対応履歴を削除しました');
+  }catch(e){toast(e.message)}
+}
 document.addEventListener('click',e=>{
+  const del=e.target.closest('[data-delete-history]');
+  if(del){deleteHistoryOne(del.dataset.deleteHistory,del.dataset.song||'この履歴');return}
   const b=e.target.closest('[data-status]');if(b)updateStatus(b.dataset.id,b.dataset.status)
 });
 $('#loginBtn').onclick=async()=>{
@@ -187,6 +208,7 @@ $('#acceptBtn').onclick=async()=>{
   }catch(e){toast(e.message)}
   finally{b.disabled=false}
 };
+$('#clearHistoryBtn').onclick=clearHistory;
 $('#refreshBtn').onclick=refresh;
 $('#notifyBtn').onclick=async()=>{
   try{
