@@ -125,7 +125,7 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 <div class="bottom"><div class="nav"><button class="active" data-nav="all">⌂<br>HOME</button><button id="navSearch">⌕<br>検索</button><button data-nav="favorite">♡<br>お気に入り</button><button data-nav="new">✦<br>新曲</button></div></div>
 <div id="toast" class="toast"></div>
 
-<div id="request" class="overlay"><div class="sheet"><h3 id="reqTitle"></h3><p class="sub">このページから配信者へ直接リクエストできます。TikTokコメントへ貼る場合はコピーも使えます。</p><div class="field"><label>お名前（任意）</label><input id="reqName" class="input" maxlength="40" placeholder="リスナー名"></div><button id="sendRequestBtn" class="btn primary" style="width:100%;margin-top:12px">🎤 配信者へリクエスト送信</button><div id="copyText" class="box" style="margin-top:10px"></div><div class="btnrow"><button class="btn ghost" data-close="request">閉じる</button><button id="copyBtn" class="btn ghost">コメント用コピー</button></div></div></div>
+<div id="request" class="overlay"><div class="sheet"><h3 id="reqTitle"></h3><p class="sub">このページから配信者へ直接リクエストできます。TikTokコメントへ貼る場合はコピーも使えます。</p><div id="reqAcceptStatus" style="margin:10px 0 0;padding:9px 11px;border-radius:11px;font-size:11px;font-weight:900;background:rgba(53,208,127,.10);color:#8de4b4;border:1px solid rgba(53,208,127,.25)">🟢 現在リクエスト受付中</div><div class="field"><label>お名前（任意）</label><input id="reqName" class="input" maxlength="40" placeholder="リスナー名"></div><button id="sendRequestBtn" class="btn primary" style="width:100%;margin-top:12px">🎤 配信者へリクエスト送信</button><div id="copyText" class="box" style="margin-top:10px"></div><div class="btnrow"><button class="btn ghost" data-close="request">閉じる</button><button id="copyBtn" class="btn ghost">コメント用コピー</button></div></div></div>
 
 
 <div id="artistPopup" class="overlay artist-popup"><div class="sheet">
@@ -324,10 +324,10 @@ function openHeaderTextEditor(){
 }
 async function load(){
   try{
-    let r=await fetch(URL+'/rest/v1/song_request_streamers?slug=eq.'+encodeURIComponent(SLUG)+'&active=eq.true&select=id,display_name,page_title,hero_message,eyebrow_text,count_label,theme,media',{headers:{apikey:KEY}});
+    let r=await fetch(URL+'/rest/v1/song_request_streamers?slug=eq.'+encodeURIComponent(SLUG)+'&active=eq.true&select=id,display_name,page_title,hero_message,eyebrow_text,count_label,theme,media,request_accepting',{headers:{apikey:KEY}});
     let a=await r.json();room=a[0];if(!room)throw Error('ROOM');
     room.theme=normalizeTheme(room.theme);room.media=normalizeMedia(room.media);applyTheme(room.theme);applyMedia(room.media);
-    applyHeaderTexts();
+    applyHeaderTexts();setRequestAcceptingUI(room.request_accepting!==false);
     $('#adminTitle').textContent=(room.display_name||'このルーム')+' 管理モード';
     r=await fetch(URL+'/rest/v1/song_request_songs?select=*&streamer_id=eq.'+room.id+'&active=eq.true&order=sort_order.asc,created_at.asc',{headers:{apikey:KEY}});
     songs=await r.json();renderArtistIndex();render()
@@ -585,13 +585,35 @@ $('#search').oninput=e=>{state.q=e.target.value;inlineArtist='';render()};
 $('#filters').onclick=e=>{let b=e.target.closest('[data-f]');if(!b)return;state.f=b.dataset.f;inlineArtist='';if(state.f==='original'){state.k='all';renderArtistIndex()}$$('#filters [data-f]').forEach(x=>x.classList.toggle('active',x===b));render()};
 $('#artistMode').onclick=e=>{const b=e.target.closest('[data-mode]');if(!b||b.dataset.mode===state.nameMode)return;state.nameMode=b.dataset.mode;state.k='all';inlineArtist='';renderArtistIndex();render()};
 $('#kana').onclick=e=>{let b=e.target.closest('[data-k]');if(!b)return;state.k=b.dataset.k;inlineArtist='';$$('#kana [data-k]').forEach(x=>x.classList.toggle('active',x===b));render()};
+function setRequestAcceptingUI(enabled){
+  if(room)room.request_accepting=enabled!==false;
+  const on=enabled!==false,st=$('#reqAcceptStatus'),btn=$('#sendRequestBtn');
+  if(st){
+    st.textContent=on?'🟢 現在リクエスト受付中':'🔴 現在リクエスト受付停止中';
+    st.style.background=on?'rgba(53,208,127,.10)':'rgba(255,107,122,.10)';
+    st.style.color=on?'#8de4b4':'#ffb2bb';
+    st.style.borderColor=on?'rgba(53,208,127,.25)':'rgba(255,107,122,.28)';
+  }
+  if(btn){
+    btn.disabled=!on;
+    btn.textContent=on?'🎤 配信者へリクエスト送信':'現在は受付停止中';
+    btn.style.opacity=on?'1':'.55';
+  }
+}
+async function checkRequestAccepting(){
+  try{
+    const r=await fetch(URL+'/rest/v1/song_request_streamers?slug=eq.'+encodeURIComponent(SLUG)+'&active=eq.true&select=request_accepting',{headers:{apikey:KEY}});
+    const a=await r.json();
+    if(a?.[0])setRequestAcceptingUI(a[0].request_accepting!==false);
+  }catch{}
+}
 function handleSongAction(e){
   let b=e.target.closest('[data-fav]');
   if(b){let id=b.dataset.fav;fav.has(id)?fav.delete(id):fav.add(id);localStorage.setItem(FAVKEY,JSON.stringify([...fav]));render();if(popupArtist)renderArtistPopup();return true}
   b=e.target.closest('[data-edit]');
   if(b){edit(songs.find(x=>x.id===b.dataset.edit));return true}
   b=e.target.closest('[data-req]');
-  if(b){selected=songs.find(x=>x.id===b.dataset.req);if(!selected)return true;$('#reqTitle').textContent=selected.title;$('#reqName').value=localStorage.getItem(REQNAMEKEY)||'';$('#copyText').textContent='🎤「'+selected.title+' / '+selected.artist+'」リクエストお願いします！'+(selected.limited&&selected.note?' ※'+selected.note:'');open('request');return true}
+  if(b){selected=songs.find(x=>x.id===b.dataset.req);if(!selected)return true;$('#reqTitle').textContent=selected.title;$('#reqName').value=localStorage.getItem(REQNAMEKEY)||'';$('#copyText').textContent='🎤「'+selected.title+' / '+selected.artist+'」リクエストお願いします！'+(selected.limited&&selected.note?' ※'+selected.note:'');setRequestAcceptingUI(room?.request_accepting!==false);open('request');checkRequestAccepting();return true}
   return false;
 }
 $('#list').onclick=e=>{
@@ -618,7 +640,7 @@ $('#artistPopupKana').onclick=e=>{
 $('#artistPopupClose').onclick=()=>{popupArtist='';close('artistPopup')};
 $('#artistPopup').onclick=e=>{if(e.target===$('#artistPopup')){popupArtist='';close('artistPopup')}};
 $('#sendRequestBtn').onclick=async()=>{
-  if(!selected)return;
+  if(!selected||room?.request_accepting===false)return;
   const btn=$('#sendRequestBtn'),name=$('#reqName').value.trim();
   localStorage.setItem(REQNAMEKEY,name);
   btn.disabled=true;btn.textContent='送信中…';
@@ -627,8 +649,11 @@ $('#sendRequestBtn').onclick=async()=>{
     const d=await r.json();
     if(!r.ok)throw Error(d.error||'リクエストを送信できませんでした');
     close('request');toast('🎤 リクエストを送信しました');
-  }catch(e){toast(e.message)}
-  finally{btn.disabled=false;btn.textContent='🎤 配信者へリクエスト送信'}
+  }catch(e){
+    if(String(e.message||'').includes('受付を停止'))setRequestAcceptingUI(false);
+    toast(e.message)
+  }
+  finally{if(room?.request_accepting!==false){btn.disabled=false;btn.textContent='🎤 配信者へリクエスト送信'}}
 };
 $('#copyBtn').onclick=async()=>{await navigator.clipboard.writeText($('#copyText').textContent).catch(()=>{});close('request');toast('コピーしました')};
 $$('[data-close]').forEach(b=>b.onclick=()=>close(b.dataset.close));
