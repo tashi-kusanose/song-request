@@ -663,7 +663,16 @@ $('#navSearch').onclick=()=>{$('#search').focus();scrollTo(0,0)};$('#secret').on
 
 $('#loginBtn').onclick=async()=>{try{let d=await call({action:'login',room:SLUG,password:$('#pw').value});token=d.token;sessionStorage.setItem(TOKKEY,token);$('#pw').value='';adminUI();toast('ログインしました')}catch(e){toast(e.message)}};
 $('#logoutBtn').onclick=async()=>{try{await call({action:'logout'})}catch{}token='';sessionStorage.removeItem(TOKKEY);adminUI();close('admin')};
-$('#addBtn').onclick=()=>{close('admin');edit(null)};$('#fab').onclick=()=>edit(null);$('#changePw').onclick=()=>{close('admin');open('pwchange')};$('#designBtn').onclick=openThemeEditor;$('#headerTextBtn').onclick=openHeaderTextEditor;$('#requestBoardBtn').onclick=()=>{window.open('requests.html?room='+encodeURIComponent(SLUG),'song_request_board_'+SLUG)};
+$('#addBtn').onclick=()=>{close('admin');edit(null)};$('#fab').onclick=()=>edit(null);$('#changePw').onclick=()=>{close('admin');open('pwchange')};$('#designBtn').onclick=openThemeEditor;$('#headerTextBtn').onclick=openHeaderTextEditor;$('#requestBoardBtn').onclick=()=>{
+  const url='requests.html?room='+encodeURIComponent(SLUG);
+  close('admin');
+  const w=window.open(url,'_blank');
+  if(!w){
+    location.href=url;
+    return;
+  }
+  try{w.focus()}catch{}
+};
 
 $('#headerTextSave').onclick=async()=>{
   const header={
