@@ -62,7 +62,17 @@ const URL='https://esfgrykcvdctnvdqipbj.supabase.co';
 const KEY='sb_publishable_Rwb3qaRXdWZoo05LrbFaDg_29tMI7uI';
 const ADMIN=URL+'/functions/v1/song-request-admin';
 const $=s=>document.querySelector(s);
-const SLUG=(new URLSearchParams(location.search).get('room')||'natsumi').trim().toLowerCase();
+function resolveRoomSlug(){
+  const direct=new URLSearchParams(location.search).get('room');
+  if(direct)return direct.trim().toLowerCase();
+  try{
+    const ref=new URL(document.referrer);
+    const fromRef=ref.searchParams.get('room');
+    if(fromRef)return fromRef.trim().toLowerCase();
+  }catch{}
+  return 'natsumi';
+}
+const SLUG=resolveRoomSlug();
 const TOKKEY='song_admin_'+SLUG;
 let token=sessionStorage.getItem(TOKKEY)||'';
 let requests=[],initialized=false,pollTimer=null,audioCtx=null,requestAccepting=true;
