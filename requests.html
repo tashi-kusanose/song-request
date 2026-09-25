@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070b14">
+<title>リクエスト受付ボード</title>
+<style>
+:root{--bg:#070b14;--panel:#101827;--line:rgba(255,255,255,.10);--text:#f7f7fb;--muted:#9ba5b5;--accent:#38bdf8;--accent2:#4f46e5;--ok:#35d07f;--warn:#ffbd4a;--bad:#ff6b7a}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{min-height:100dvh;background:radial-gradient(circle at 85% 0%,rgba(56,189,248,.14),transparent 34%),radial-gradient(circle at 15% 10%,rgba(79,70,229,.16),transparent 34%),var(--bg)}
+button,input{font:inherit}.wrap{width:min(100%,760px);margin:auto;padding:18px 16px 80px}.top{position:sticky;top:0;z-index:4;margin:-18px -16px 14px;padding:16px;background:linear-gradient(180deg,rgba(7,11,20,.98) 78%,rgba(7,11,20,.82));backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.eyebrow{font-size:10px;letter-spacing:.24em;color:#9db0c8;font-weight:900}.title{font-size:24px;font-weight:950;margin:5px 0}.room{font-size:13px;color:var(--accent);font-weight:900}.statusline{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.pill{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--line);border-radius:999px;font-size:10px;color:var(--muted);background:rgba(255,255,255,.025)}.dot{width:7px;height:7px;border-radius:50%;background:#64748b}.dot.on{background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px}.btn{height:44px;border:0;border-radius:12px;font-weight:900}.primary{color:white;background:linear-gradient(105deg,var(--accent),var(--accent2))}.ghost{color:#d8deea;background:#121b2b;border:1px solid var(--line)}.danger{color:#ffc2ca;background:rgba(255,107,122,.10);border:1px solid rgba(255,107,122,.25)}
+.section{margin-top:18px}.sectionhead{display:flex;justify-content:space-between;align-items:end;margin-bottom:9px}.sectionhead h2{font-size:16px;margin:0}.count{font-size:10px;color:var(--muted)}
+.queue{display:grid;gap:8px}.card{border:1px solid var(--line);border-radius:16px;padding:12px;background:linear-gradient(180deg,rgba(17,26,43,.98),rgba(12,19,31,.98));box-shadow:0 10px 30px rgba(0,0,0,.18)}.card.next{border-color:rgba(56,189,248,.55);box-shadow:0 0 0 1px rgba(56,189,248,.10),0 12px 32px rgba(0,0,0,.2)}.card.done,.card.skipped{opacity:.7}.song{font-size:15px;font-weight:950;line-height:1.35}.artist{font-size:11px;color:var(--muted);margin-top:3px}.meta{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:9px;font-size:10px;color:#96a0b1}.who{font-weight:850;color:#cbd4e1}.tag{display:inline-flex;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:900}.tag.new{background:rgba(255,189,74,.13);color:#ffd27b}.tag.next{background:rgba(56,189,248,.14);color:#8edcff}.tag.done{background:rgba(53,208,127,.12);color:#7ce6ab}.tag.skipped{background:rgba(255,107,122,.10);color:#ffa8b2}
+.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}.actions button{height:38px;border-radius:10px;border:1px solid var(--line);font-size:10px;font-weight:900;background:#111b2b;color:#dfe7f2}.actions .nextbtn{color:#98e2ff;border-color:rgba(56,189,248,.3)}.actions .donebtn{color:#8de4b4;border-color:rgba(53,208,127,.3)}.actions .skipbtn{color:#ffb2bb;border-color:rgba(255,107,122,.28)}
+.empty{padding:44px 14px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted);font-size:12px}.loginbox{margin:80px auto 0;max-width:430px;padding:18px;border:1px solid var(--line);border-radius:18px;background:#101827}.loginbox h2{margin:0 0 5px}.sub{font-size:11px;color:var(--muted);line-height:1.6}.input{width:100%;height:46px;margin-top:10px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:#0b1220;color:white;outline:none}.loginbox .btn{width:100%;margin-top:10px}.toast{position:fixed;z-index:10;left:50%;bottom:20px;transform:translate(-50%,12px);opacity:0;pointer-events:none;width:min(calc(100% - 30px),520px);padding:11px 13px;border-radius:13px;background:#182236;border:1px solid var(--line);color:#fff;font-size:11px;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:520px){.wrap{padding-left:10px;padding-right:10px}.top{margin-left:-10px;margin-right:-10px}.actions{grid-template-columns:1fr 1fr}.actions button:last-child{grid-column:1/-1}.title{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loginView" class="loginbox" hidden>
+    <div class="eyebrow">STREAMER REQUEST BOARD</div>
+    <h2>リクエスト受付ボード</h2>
+    <p class="sub">配信者用の管理PWでログインしてください。</p>
+    <input id="pw" class="input" type="password" inputmode="text" placeholder="管理PW">
+    <button id="loginBtn" class="btn primary">ログイン</button>
+  </div>
+
+  <main id="board" hidden>
+    <header class="top">
+      <div class="eyebrow">STREAMER REQUEST BOARD</div>
+      <div class="title">リクエスト受付</div>
+      <div id="roomName" class="room"></div>
+      <div class="statusline">
+        <span class="pill"><span id="connDot" class="dot"></span><span id="connText">接続確認中</span></span>
+        <span class="pill">自動更新 約2秒</span>
+      </div>
+      <div class="controls">
+        <button id="notifyBtn" class="btn primary">🔔 通知をON</button>
+        <button id="refreshBtn" class="btn ghost">↻ 今すぐ更新</button>
+      </div>
+    </header>
+
+    <section class="section">
+      <div class="sectionhead"><h2>受付中</h2><div id="pendingCount" class="count">0件</div></div>
+      <div id="pending" class="queue"></div>
+    </section>
+
+    <section class="section">
+      <div class="sectionhead"><h2>対応履歴</h2><div id="historyCount" class="count">0件</div></div>
+      <div id="history" class="queue"></div>
+    </section>
+  </main>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const URL='https://esfgrykcvdctnvdqipbj.supabase.co';
+const KEY='sb_publishable_Rwb3qaRXdWZoo05LrbFaDg_29tMI7uI';
+const ADMIN=URL+'/functions/v1/song-request-admin';
+const $=s=>document.querySelector(s);
+const SLUG=(new URLSearchParams(location.search).get('room')||'natsumi').trim().toLowerCase();
+const TOKKEY='song_admin_'+SLUG;
+let token=sessionStorage.getItem(TOKKEY)||'';
+let requests=[],initialized=false,pollTimer=null,audioCtx=null;
+
+function toast(msg){
+  const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),2600)
+}
+async function call(payload){
+  const h={'Content-Type':'application/json'};if(token)h['x-admin-token']=token;
+  const r=await fetch(ADMIN,{method:'POST',headers:h,body:JSON.stringify(payload)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){if(r.status===401&&payload.action!=='login'){token='';sessionStorage.removeItem(TOKKEY);showLogin()}throw Error(d.error||'処理に失敗しました')}
+  return d
+}
+async function loadRoom(){
+  try{
+    const r=await fetch(URL+'/rest/v1/song_request_streamers?slug=eq.'+encodeURIComponent(SLUG)+'&active=eq.true&select=display_name',{headers:{apikey:KEY}});
+    const a=await r.json();$('#roomName').textContent=a?.[0]?.display_name||SLUG;
+    document.title=(a?.[0]?.display_name||SLUG)+' | リクエスト受付';
+  }catch{$('#roomName').textContent=SLUG}
+}
+function showLogin(){
+  $('#loginView').hidden=false;$('#board').hidden=true;
+  if(pollTimer){clearInterval(pollTimer);pollTimer=null}
+}
+function showBoard(){
+  $('#loginView').hidden=true;$('#board').hidden=false
+}
+function fmtTime(v){
+  try{return new Intl.DateTimeFormat('ja-JP',{hour:'2-digit',minute:'2-digit'}).format(new Date(v))}catch{return ''}
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function statusLabel(s){return s==='next'?'次に歌う':s==='done'?'歌唱済み':s==='skipped'?'スキップ':'未対応'}
+function card(r){
+  const who=r.requester_name?'<span class="who">'+esc(r.requester_name)+'さん</span>':'<span class="who">名前なし</span>';
+  const actions=(r.status==='done'||r.status==='skipped')
+    ?'<div class="actions"><button data-status="new" data-id="'+r.id+'">未対応に戻す</button></div>'
+    :'<div class="actions"><button class="nextbtn" data-status="next" data-id="'+r.id+'">次に歌う</button><button class="donebtn" data-status="done" data-id="'+r.id+'">歌唱済み</button><button class="skipbtn" data-status="skipped" data-id="'+r.id+'">スキップ</button></div>';
+  return '<article class="card '+r.status+'"><div class="song">'+esc(r.song_title)+'</div><div class="artist">'+esc(r.artist)+'</div><div class="meta"><div>'+who+' ・ '+fmtTime(r.created_at)+'</div><span class="tag '+r.status+'">'+statusLabel(r.status)+'</span></div>'+actions+'</article>'
+}
+function render(){
+  const pending=requests.filter(r=>r.status==='new'||r.status==='next').sort((a,b)=>{
+    if(a.status!==b.status)return a.status==='next'?-1:1;
+    return new Date(a.created_at)-new Date(b.created_at)
+  });
+  const history=requests.filter(r=>r.status==='done'||r.status==='skipped').sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at)).slice(0,40);
+  $('#pendingCount').textContent=pending.length+'件';
+  $('#historyCount').textContent=history.length+'件';
+  $('#pending').innerHTML=pending.length?pending.map(card).join(''):'<div class="empty">現在、受付中のリクエストはありません。</div>';
+  $('#history').innerHTML=history.length?history.map(card).join(''):'<div class="empty">対応履歴はまだありません。</div>';
+}
+function beep(){
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended')audioCtx.resume();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='sine';o.frequency.setValueAtTime(880,audioCtx.currentTime);g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.16,audioCtx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.34);
+    o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.36);
+  }catch{}
+}
+function notifyNew(r){
+  beep();
+  const body=(r.requester_name?r.requester_name+'さん：':'')+r.song_title+' / '+r.artist;
+  if('Notification'in window&&Notification.permission==='granted'){
+    try{new Notification('🎤 新しい歌リクエスト',{body,tag:'song-request-'+r.id})}catch{}
+  }
+  toast('🎤 新着：'+r.song_title)
+}
+async function refresh(){
+  if(!token)return showLogin();
+  try{
+    const d=await call({action:'list_requests',limit:120});
+    const next=d.requests||[];
+    if(initialized){
+      const known=new Set(requests.map(r=>r.id));
+      next.filter(r=>r.status==='new'&&!known.has(r.id)).reverse().forEach(notifyNew);
+    }
+    requests=next;initialized=true;render();
+    $('#connDot').classList.add('on');$('#connText').textContent='受付中';
+  }catch(e){
+    $('#connDot').classList.remove('on');$('#connText').textContent='接続エラー';
+    if(token)toast(e.message)
+  }
+}
+async function updateStatus(id,status){
+  try{
+    await call({action:'update_request',id,status});await refresh()
+  }catch(e){toast(e.message)}
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-status]');if(b)updateStatus(b.dataset.id,b.dataset.status)
+});
+$('#loginBtn').onclick=async()=>{
+  try{
+    const d=await call({action:'login',room:SLUG,password:$('#pw').value});
+    token=d.token;sessionStorage.setItem(TOKKEY,token);$('#pw').value='';initialized=false;showBoard();await refresh();startPolling();toast('ログインしました')
+  }catch(e){toast(e.message)}
+};
+$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#loginBtn').click()});
+$('#refreshBtn').onclick=refresh;
+$('#notifyBtn').onclick=async()=>{
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();beep();
+    if('Notification'in window){
+      const p=await Notification.requestPermission();
+      $('#notifyBtn').textContent=p==='granted'?'🔔 通知ON':'🔔 音通知ON';
+      toast(p==='granted'?'ブラウザ通知と通知音をONにしました':'通知音をONにしました');
+    }else{toast('通知音をONにしました')}
+  }catch{toast('通知設定を変更できませんでした')}
+};
+function startPolling(){
+  if(pollTimer)clearInterval(pollTimer);
+  pollTimer=setInterval(refresh,2000)
+}
+(async()=>{
+  await loadRoom();
+  if(token){
+    showBoard();await refresh();if(token)startPolling()
+  }else showLogin()
+})();
+</script>
+</body>
+</html>
