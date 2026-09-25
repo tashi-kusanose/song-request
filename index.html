@@ -190,7 +190,7 @@ const URL='https://esfgrykcvdctnvdqipbj.supabase.co',KEY='sb_publishable_Rwb3qaR
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 function roomSlug(){const q=new URLSearchParams(location.search).get('room');return(q||'natsumi').trim().toLowerCase()}
 const SLUG=roomSlug(),TOKKEY='song_admin_'+SLUG,FAVKEY='song_fav_'+SLUG,REQNAMEKEY='song_requester_name_'+SLUG;
-let room=null,songs=[],selected=null,token=sessionStorage.getItem(TOKKEY)||'',state={f:'all',nameMode:'jp',k:'all',q:''},themeDraft=null,inlineArtist='',popupArtist='',popupNameMode='jp',popupKana='all';
+let room=null,songs=[],selected=null,token=sessionStorage.getItem(TOKKEY)||localStorage.getItem(TOKKEY)||'',state={f:'all',nameMode:'jp',k:'all',q:''},themeDraft=null,inlineArtist='',popupArtist='',popupNameMode='jp',popupKana='all';
 let fav=new Set(JSON.parse(localStorage.getItem(FAVKEY)||'[]'));
 
 const PRESETS={
@@ -577,7 +577,7 @@ function adminUI(){document.body.classList.toggle('admin',!!token);$('#login').h
 async function call(p){
   let h={'Content-Type':'application/json'};if(token)h['x-admin-token']=token;
   let r=await fetch(ADMIN,{method:'POST',headers:h,body:JSON.stringify(p)}),d=await r.json();
-  if(!r.ok){if(r.status===401&&p.action!=='login'){token='';sessionStorage.removeItem(TOKKEY);adminUI()}throw Error(d.error||'処理に失敗しました')}return d
+  if(!r.ok){if(r.status===401&&p.action!=='login'){token='';sessionStorage.removeItem(TOKKEY);localStorage.removeItem(TOKKEY);adminUI()}throw Error(d.error||'処理に失敗しました')}return d
 }
 function edit(s){$('#songId').value=s?.id||'';$('#editTitle').textContent=s?'曲を編集':'曲を追加';$('#fTitle').value=s?.title||'';$('#fArtist').value=s?.artist||'';$('#fKana').value=s?.kana_group||'あ';$('#fNote').value=s?.note||'';$('#fOriginal').checked=s?.category==='original';$('#fLimited').checked=!!s?.limited;$('#fRecommend').checked=!!s?.recommend;$('#fPopular').checked=!!s?.popular;$('#fNew').checked=!!s?.is_new;$('#fActive').checked=s?.active!==false;$('#deleteBtn').style.display=s?'block':'none';open('edit')}
 
@@ -670,8 +670,8 @@ $$('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o&&o.id!=='theme'&&o.id!==
 $$('[data-nav]').forEach(b=>b.onclick=()=>{state.f=b.dataset.nav;inlineArtist='';$$('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render();scrollTo(0,0)});
 $('#navSearch').onclick=()=>{$('#search').focus();scrollTo(0,0)};$('#secret').onclick=()=>{adminUI();open('admin');if(token)checkRequestAccepting()};
 
-$('#loginBtn').onclick=async()=>{try{let d=await call({action:'login',room:SLUG,password:$('#pw').value});token=d.token;sessionStorage.setItem(TOKKEY,token);$('#pw').value='';adminUI();toast('ログインしました')}catch(e){toast(e.message)}};
-$('#logoutBtn').onclick=async()=>{try{await call({action:'logout'})}catch{}token='';sessionStorage.removeItem(TOKKEY);adminUI();close('admin')};
+$('#loginBtn').onclick=async()=>{try{let d=await call({action:'login',room:SLUG,password:$('#pw').value});token=d.token;sessionStorage.setItem(TOKKEY,token);localStorage.setItem(TOKKEY,token);$('#pw').value='';adminUI();toast('ログインしました')}catch(e){toast(e.message)}};
+$('#logoutBtn').onclick=async()=>{try{await call({action:'logout'})}catch{}token='';sessionStorage.removeItem(TOKKEY);localStorage.removeItem(TOKKEY);adminUI();close('admin')};
 $('#adminAcceptBtn').onclick=async()=>{
   const b=$('#adminAcceptBtn'),next=room?.request_accepting===false;
   b.disabled=true;
