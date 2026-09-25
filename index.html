@@ -125,7 +125,7 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 <div class="bottom"><div class="nav"><button class="active" data-nav="all">⌂<br>HOME</button><button id="navSearch">⌕<br>検索</button><button data-nav="favorite">♡<br>お気に入り</button><button data-nav="new">✦<br>新曲</button></div></div>
 <div id="toast" class="toast"></div>
 
-<div id="request" class="overlay"><div class="sheet"><h3 id="reqTitle"></h3><p class="sub">下の文章をコピーしてLIVEコメント欄へ貼り付けてください。</p><div id="copyText" class="box"></div><div class="btnrow"><button class="btn ghost" data-close="request">閉じる</button><button id="copyBtn" class="btn primary">コピー</button></div></div></div>
+<div id="request" class="overlay"><div class="sheet"><h3 id="reqTitle"></h3><p class="sub">このページから配信者へ直接リクエストできます。TikTokコメントへ貼る場合はコピーも使えます。</p><div class="field"><label>お名前（任意）</label><input id="reqName" class="input" maxlength="40" placeholder="リスナー名"></div><button id="sendRequestBtn" class="btn primary" style="width:100%;margin-top:12px">🎤 配信者へリクエスト送信</button><div id="copyText" class="box" style="margin-top:10px"></div><div class="btnrow"><button class="btn ghost" data-close="request">閉じる</button><button id="copyBtn" class="btn ghost">コメント用コピー</button></div></div></div>
 
 
 <div id="artistPopup" class="overlay artist-popup"><div class="sheet">
@@ -137,7 +137,7 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 
 <div id="admin" class="overlay"><div class="sheet">
   <div id="login"><h3 id="adminTitle">管理モード</h3><p class="sub">配信者専用PWを入力してください。</p><div class="field"><label>管理PW</label><input id="pw" class="input" type="password"></div><div class="btnrow"><button class="btn ghost" data-close="admin">閉じる</button><button id="loginBtn" class="btn primary">ログイン</button></div></div>
-  <div id="menu" hidden><h3>管理モード</h3><p class="sub">曲・ヘッダー文字・デザイン・PWを管理できます。</p><div class="btnrow"><button id="logoutBtn" class="btn ghost">ログアウト</button><button id="addBtn" class="btn primary">＋ 曲を追加</button></div><button id="headerTextBtn" class="btn ghost" style="width:100%;margin-top:8px">✏️ ヘッダー文字設定</button><button id="designBtn" class="btn ghost" style="width:100%;margin-top:8px">🎨 デザイン設定</button><button id="changePw" class="btn ghost" style="width:100%;margin-top:8px">PW変更</button></div>
+  <div id="menu" hidden><h3>管理モード</h3><p class="sub">曲・ヘッダー文字・デザイン・PWを管理できます。</p><div class="btnrow"><button id="logoutBtn" class="btn ghost">ログアウト</button><button id="addBtn" class="btn primary">＋ 曲を追加</button></div><button id="requestBoardBtn" class="btn primary" style="width:100%;margin-top:8px">🔔 リクエスト受付ボード</button><button id="headerTextBtn" class="btn ghost" style="width:100%;margin-top:8px">✏️ ヘッダー文字設定</button><button id="designBtn" class="btn ghost" style="width:100%;margin-top:8px">🎨 デザイン設定</button><button id="changePw" class="btn ghost" style="width:100%;margin-top:8px">PW変更</button></div>
 </div></div>
 
 <div id="headertext" class="overlay"><div class="sheet">
@@ -189,7 +189,7 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 const URL='https://esfgrykcvdctnvdqipbj.supabase.co',KEY='sb_publishable_Rwb3qaRXdWZoo05LrbFaDg_29tMI7uI',ADMIN=URL+'/functions/v1/song-request-admin',MEDIA=URL+'/functions/v1/song-request-media';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 function roomSlug(){const q=new URLSearchParams(location.search).get('room');return(q||'natsumi').trim().toLowerCase()}
-const SLUG=roomSlug(),TOKKEY='song_admin_'+SLUG,FAVKEY='song_fav_'+SLUG;
+const SLUG=roomSlug(),TOKKEY='song_admin_'+SLUG,FAVKEY='song_fav_'+SLUG,REQNAMEKEY='song_requester_name_'+SLUG;
 let room=null,songs=[],selected=null,token=sessionStorage.getItem(TOKKEY)||'',state={f:'all',nameMode:'jp',k:'all',q:''},themeDraft=null,inlineArtist='',popupArtist='',popupNameMode='jp',popupKana='all';
 let fav=new Set(JSON.parse(localStorage.getItem(FAVKEY)||'[]'));
 
@@ -591,7 +591,7 @@ function handleSongAction(e){
   b=e.target.closest('[data-edit]');
   if(b){edit(songs.find(x=>x.id===b.dataset.edit));return true}
   b=e.target.closest('[data-req]');
-  if(b){selected=songs.find(x=>x.id===b.dataset.req);if(!selected)return true;$('#reqTitle').textContent=selected.title;$('#copyText').textContent='🎤「'+selected.title+' / '+selected.artist+'」リクエストお願いします！'+(selected.limited&&selected.note?' ※'+selected.note:'');open('request');return true}
+  if(b){selected=songs.find(x=>x.id===b.dataset.req);if(!selected)return true;$('#reqTitle').textContent=selected.title;$('#reqName').value=localStorage.getItem(REQNAMEKEY)||'';$('#copyText').textContent='🎤「'+selected.title+' / '+selected.artist+'」リクエストお願いします！'+(selected.limited&&selected.note?' ※'+selected.note:'');open('request');return true}
   return false;
 }
 $('#list').onclick=e=>{
@@ -617,6 +617,19 @@ $('#artistPopupKana').onclick=e=>{
 };
 $('#artistPopupClose').onclick=()=>{popupArtist='';close('artistPopup')};
 $('#artistPopup').onclick=e=>{if(e.target===$('#artistPopup')){popupArtist='';close('artistPopup')}};
+$('#sendRequestBtn').onclick=async()=>{
+  if(!selected)return;
+  const btn=$('#sendRequestBtn'),name=$('#reqName').value.trim();
+  localStorage.setItem(REQNAMEKEY,name);
+  btn.disabled=true;btn.textContent='送信中…';
+  try{
+    const r=await fetch(ADMIN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submit_request',room:SLUG,song_id:selected.id,requester_name:name})});
+    const d=await r.json();
+    if(!r.ok)throw Error(d.error||'リクエストを送信できませんでした');
+    close('request');toast('🎤 リクエストを送信しました');
+  }catch(e){toast(e.message)}
+  finally{btn.disabled=false;btn.textContent='🎤 配信者へリクエスト送信'}
+};
 $('#copyBtn').onclick=async()=>{await navigator.clipboard.writeText($('#copyText').textContent).catch(()=>{});close('request');toast('コピーしました')};
 $$('[data-close]').forEach(b=>b.onclick=()=>close(b.dataset.close));
 $$('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o&&o.id!=='theme'&&o.id!=='artistPopup')o.classList.remove('show')});
@@ -625,7 +638,7 @@ $('#navSearch').onclick=()=>{$('#search').focus();scrollTo(0,0)};$('#secret').on
 
 $('#loginBtn').onclick=async()=>{try{let d=await call({action:'login',room:SLUG,password:$('#pw').value});token=d.token;sessionStorage.setItem(TOKKEY,token);$('#pw').value='';adminUI();toast('ログインしました')}catch(e){toast(e.message)}};
 $('#logoutBtn').onclick=async()=>{try{await call({action:'logout'})}catch{}token='';sessionStorage.removeItem(TOKKEY);adminUI();close('admin')};
-$('#addBtn').onclick=()=>{close('admin');edit(null)};$('#fab').onclick=()=>edit(null);$('#changePw').onclick=()=>{close('admin');open('pwchange')};$('#designBtn').onclick=openThemeEditor;$('#headerTextBtn').onclick=openHeaderTextEditor;
+$('#addBtn').onclick=()=>{close('admin');edit(null)};$('#fab').onclick=()=>edit(null);$('#changePw').onclick=()=>{close('admin');open('pwchange')};$('#designBtn').onclick=openThemeEditor;$('#headerTextBtn').onclick=openHeaderTextEditor;$('#requestBoardBtn').onclick=()=>{window.open('requests.html?room='+encodeURIComponent(SLUG),'song_request_board_'+SLUG)};
 
 $('#headerTextSave').onclick=async()=>{
   const header={
