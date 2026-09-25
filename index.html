@@ -682,7 +682,14 @@ $('#adminAcceptBtn').onclick=async()=>{
   }catch(e){toast(e.message)}
   finally{b.disabled=false}
 };
-$('#addBtn').onclick=()=>{close('admin');edit(null)};$('#fab').onclick=()=>edit(null);$('#changePw').onclick=()=>{close('admin');open('pwchange')};$('#designBtn').onclick=openThemeEditor;$('#headerTextBtn').onclick=openHeaderTextEditor;
+async function openStandaloneBoard(){
+  const d=await call({action:'get_request_board_link'});
+  const u=new URL('requests.html',location.href);
+  u.search='?room='+encodeURIComponent(SLUG);
+  u.hash='key='+encodeURIComponent(d.access_key);
+  location.href=u.toString();
+}
+$('#addBtn').onclick=()=>{close('admin');edit(null)};$('#fab').onclick=()=>edit(null);$('#changePw').onclick=()=>{close('admin');open('pwchange')};$('#designBtn').onclick=openThemeEditor;$('#headerTextBtn').onclick=openHeaderTextEditor;$('#requestBoardBtn').onclick=()=>openStandaloneBoard().catch(e=>toast(e.message));
 
 $('#headerTextSave').onclick=async()=>{
   const header={
