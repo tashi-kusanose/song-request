@@ -69,6 +69,7 @@ button,input{font:inherit}.wrap{width:min(100%,760px);margin:auto;padding:18px 1
 const URL='https://esfgrykcvdctnvdqipbj.supabase.co';
 const KEY='sb_publishable_Rwb3qaRXdWZoo05LrbFaDg_29tMI7uI';
 const ADMIN=URL+'/functions/v1/song-request-admin';
+const BOARD=URL+'/functions/v1/song-request-board';
 const $=s=>document.querySelector(s);
 function resolveRoomSlug(){
   const direct=new URLSearchParams(location.search).get('room');
@@ -81,6 +82,10 @@ function resolveRoomSlug(){
   return 'natsumi';
 }
 const SLUG=resolveRoomSlug();
+function resolveBoardKey(){
+  try{return new URLSearchParams(location.hash.slice(1)).get('key')||''}catch{return ''}
+}
+const BOARDKEY=resolveBoardKey();
 const TOKKEY='song_admin_'+SLUG;
 let token=sessionStorage.getItem(TOKKEY)||localStorage.getItem(TOKKEY)||'';
 let requests=[],initialized=false,pollTimer=null,audioCtx=null,requestAccepting=true;
@@ -89,6 +94,14 @@ function toast(msg){
   const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),2600)
 }
 async function call(payload){
+  if(BOARDKEY){
+    const map={list_requests:'list',update_request:'set_status',update_request_accepting:'set_accepting',delete_request_history:'delete_history',clear_request_history:'clear_history'};
+    const body={...payload,action:map[payload.action]||payload.action,key:BOARDKEY};
+    const r=await fetch(BOARD,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){if(r.status===401)showLogin();throw Error(d.error||'処理に失敗しました')}
+    return d;
+  }
   const h={'Content-Type':'application/json'};if(token)h['x-admin-token']=token;
   const r=await fetch(ADMIN,{method:'POST',headers:h,body:JSON.stringify(payload)});
   const d=await r.json().catch(()=>({}));
@@ -105,6 +118,8 @@ async function loadRoom(){
 function showLogin(){
   $('#loginView').hidden=false;$('#board').hidden=true;
   $('#backToSongs').href='./?room='+encodeURIComponent(SLUG);
+  const p=$('#loginView .sub');
+  if(p)p.textContent=BOARDKEY?'この受付ボード専用URLが無効です。配信者用URLをご確認ください。':'受付ボード専用URL、または管理画面から開いてください。';
   if(pollTimer){clearInterval(pollTimer);pollTimer=null}
 }
 function showBoard(){
@@ -158,15 +173,19 @@ function notifyNew(r){
   toast('🎤 新着：'+r.song_title)
 }
 async function refresh(){
-  if(!token)return showLogin();
+  if(!token&&!BOARDKEY)return showLogin();
   try{
     const d=await call({action:'list_requests',limit:120});
+    if(d.room?.display_name){
+      $('#roomName').textContent=d.room.display_name;
+      document.title=d.room.display_name+' | リクエスト受付';
+    }
     const next=d.requests||[];
     if(initialized){
       const known=new Set(requests.map(r=>r.id));
       next.filter(r=>r.status==='new'&&!known.has(r.id)).reverse().forEach(notifyNew);
     }
-    requests=next;requestAccepting=d.request_accepting!==false;initialized=true;renderAccepting();render();
+    requests=next;requestAccepting=(d.room?.request_accepting??d.request_accepting)!==false;initialized=true;renderAccepting();render();
     $('#connDot').classList.add('on');$('#connText').textContent='接続中';
   }catch(e){
     $('#connDot').classList.remove('on');$('#connText').textContent='接続エラー';
@@ -229,8 +248,8 @@ function startPolling(){
 }
 (async()=>{
   await loadRoom();
-  if(token){
-    showBoard();await refresh();if(token)startPolling()
+  if(BOARDKEY||token){
+    showBoard();await refresh();if(BOARDKEY||token)startPolling()
   }else showLogin()
 })();
 </script>
