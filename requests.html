@@ -10,7 +10,7 @@
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{min-height:100dvh;background:radial-gradient(circle at 85% 0%,rgba(56,189,248,.14),transparent 34%),radial-gradient(circle at 15% 10%,rgba(79,70,229,.16),transparent 34%),var(--bg)}
 button,input{font:inherit}.wrap{width:min(100%,760px);margin:auto;padding:18px 16px 80px}.top{position:sticky;top:0;z-index:4;margin:-18px -16px 14px;padding:16px;background:linear-gradient(180deg,rgba(7,11,20,.98) 78%,rgba(7,11,20,.82));backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .eyebrow{font-size:10px;letter-spacing:.24em;color:#9db0c8;font-weight:900}.title{font-size:24px;font-weight:950;margin:5px 0}.room{font-size:13px;color:var(--accent);font-weight:900}.statusline{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.pill{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--line);border-radius:999px;font-size:10px;color:var(--muted);background:rgba(255,255,255,.025)}.dot{width:7px;height:7px;border-radius:50%;background:#64748b}.dot.on{background:var(--ok);box-shadow:0 0 10px var(--ok)}
-.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px}.btn{height:44px;border:0;border-radius:12px;font-weight:900}.primary{color:white;background:linear-gradient(105deg,var(--accent),var(--accent2))}.ghost{color:#d8deea;background:#121b2b;border:1px solid var(--line)}.danger{color:#ffc2ca;background:rgba(255,107,122,.10);border:1px solid rgba(255,107,122,.25)}
+.accept-toggle{width:100%;height:50px;margin-top:12px;border-radius:14px;border:1px solid rgba(53,208,127,.35);font-weight:950;color:#a7f3c8;background:rgba(53,208,127,.10)}.accept-toggle.off{color:#ffc1c7;background:rgba(255,107,122,.10);border-color:rgba(255,107,122,.32)}.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 14px}.btn{height:44px;border:0;border-radius:12px;font-weight:900}.primary{color:white;background:linear-gradient(105deg,var(--accent),var(--accent2))}.ghost{color:#d8deea;background:#121b2b;border:1px solid var(--line)}.danger{color:#ffc2ca;background:rgba(255,107,122,.10);border:1px solid rgba(255,107,122,.25)}
 .section{margin-top:18px}.sectionhead{display:flex;justify-content:space-between;align-items:end;margin-bottom:9px}.sectionhead h2{font-size:16px;margin:0}.count{font-size:10px;color:var(--muted)}
 .queue{display:grid;gap:8px}.card{border:1px solid var(--line);border-radius:16px;padding:12px;background:linear-gradient(180deg,rgba(17,26,43,.98),rgba(12,19,31,.98));box-shadow:0 10px 30px rgba(0,0,0,.18)}.card.next{border-color:rgba(56,189,248,.55);box-shadow:0 0 0 1px rgba(56,189,248,.10),0 12px 32px rgba(0,0,0,.2)}.card.done,.card.skipped{opacity:.7}.song{font-size:15px;font-weight:950;line-height:1.35}.artist{font-size:11px;color:var(--muted);margin-top:3px}.meta{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:9px;font-size:10px;color:#96a0b1}.who{font-weight:850;color:#cbd4e1}.tag{display:inline-flex;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:900}.tag.new{background:rgba(255,189,74,.13);color:#ffd27b}.tag.next{background:rgba(56,189,248,.14);color:#8edcff}.tag.done{background:rgba(53,208,127,.12);color:#7ce6ab}.tag.skipped{background:rgba(255,107,122,.10);color:#ffa8b2}
 .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}.actions button{height:38px;border-radius:10px;border:1px solid var(--line);font-size:10px;font-weight:900;background:#111b2b;color:#dfe7f2}.actions .nextbtn{color:#98e2ff;border-color:rgba(56,189,248,.3)}.actions .donebtn{color:#8de4b4;border-color:rgba(53,208,127,.3)}.actions .skipbtn{color:#ffb2bb;border-color:rgba(255,107,122,.28)}
@@ -37,6 +37,7 @@ button,input{font:inherit}.wrap{width:min(100%,760px);margin:auto;padding:18px 1
         <span class="pill"><span id="connDot" class="dot"></span><span id="connText">接続確認中</span></span>
         <span class="pill">自動更新 約2秒</span>
       </div>
+      <button id="acceptBtn" class="accept-toggle">🟢 リクエスト受付中</button>
       <div class="controls">
         <button id="notifyBtn" class="btn primary">🔔 通知をON</button>
         <button id="refreshBtn" class="btn ghost">↻ 今すぐ更新</button>
@@ -64,7 +65,7 @@ const $=s=>document.querySelector(s);
 const SLUG=(new URLSearchParams(location.search).get('room')||'natsumi').trim().toLowerCase();
 const TOKKEY='song_admin_'+SLUG;
 let token=sessionStorage.getItem(TOKKEY)||'';
-let requests=[],initialized=false,pollTimer=null,audioCtx=null;
+let requests=[],initialized=false,pollTimer=null,audioCtx=null,requestAccepting=true;
 
 function toast(msg){
   const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),2600)
@@ -101,6 +102,11 @@ function card(r){
     ?'<div class="actions"><button data-status="new" data-id="'+r.id+'">未対応に戻す</button></div>'
     :'<div class="actions"><button class="nextbtn" data-status="next" data-id="'+r.id+'">次に歌う</button><button class="donebtn" data-status="done" data-id="'+r.id+'">歌唱済み</button><button class="skipbtn" data-status="skipped" data-id="'+r.id+'">スキップ</button></div>';
   return '<article class="card '+r.status+'"><div class="song">'+esc(r.song_title)+'</div><div class="artist">'+esc(r.artist)+'</div><div class="meta"><div>'+who+' ・ '+fmtTime(r.created_at)+'</div><span class="tag '+r.status+'">'+statusLabel(r.status)+'</span></div>'+actions+'</article>'
+}
+function renderAccepting(){
+  const b=$('#acceptBtn');
+  b.classList.toggle('off',!requestAccepting);
+  b.textContent=requestAccepting?'🟢 リクエスト受付中（タップで停止）':'🔴 リクエスト受付停止中（タップで開始）';
 }
 function render(){
   const pending=requests.filter(r=>r.status==='new'||r.status==='next').sort((a,b)=>{
@@ -139,8 +145,8 @@ async function refresh(){
       const known=new Set(requests.map(r=>r.id));
       next.filter(r=>r.status==='new'&&!known.has(r.id)).reverse().forEach(notifyNew);
     }
-    requests=next;initialized=true;render();
-    $('#connDot').classList.add('on');$('#connText').textContent='受付中';
+    requests=next;requestAccepting=d.request_accepting!==false;initialized=true;renderAccepting();render();
+    $('#connDot').classList.add('on');$('#connText').textContent='接続中';
   }catch(e){
     $('#connDot').classList.remove('on');$('#connText').textContent='接続エラー';
     if(token)toast(e.message)
@@ -161,6 +167,16 @@ $('#loginBtn').onclick=async()=>{
   }catch(e){toast(e.message)}
 };
 $('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#loginBtn').click()});
+$('#acceptBtn').onclick=async()=>{
+  const next=!requestAccepting;
+  const b=$('#acceptBtn');b.disabled=true;
+  try{
+    const d=await call({action:'update_request_accepting',enabled:next});
+    requestAccepting=d.request_accepting!==false;renderAccepting();
+    toast(requestAccepting?'🟢 リクエスト受付を開始しました':'🔴 リクエスト受付を停止しました');
+  }catch(e){toast(e.message)}
+  finally{b.disabled=false}
+};
 $('#refreshBtn').onclick=refresh;
 $('#notifyBtn').onclick=async()=>{
   try{
