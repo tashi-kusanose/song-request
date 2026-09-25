@@ -125,7 +125,7 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 <div class="bottom"><div class="nav"><button class="active" data-nav="all">⌂<br>HOME</button><button id="navSearch">⌕<br>検索</button><button data-nav="favorite">♡<br>お気に入り</button><button data-nav="new">✦<br>新曲</button></div></div>
 <div id="toast" class="toast"></div>
 
-<div id="request" class="overlay"><div class="sheet"><h3 id="reqTitle"></h3><p class="sub">このページから配信者へ直接リクエストできます。TikTokコメントへ貼る場合はコピーも使えます。</p><div id="reqAcceptStatus" style="margin:10px 0 0;padding:9px 11px;border-radius:11px;font-size:11px;font-weight:900;background:rgba(53,208,127,.10);color:#8de4b4;border:1px solid rgba(53,208,127,.25)">🟢 現在リクエスト受付中</div><div class="field"><label>お名前（任意）</label><input id="reqName" class="input" maxlength="40" placeholder="リスナー名"></div><button id="sendRequestBtn" class="btn primary" style="width:100%;margin-top:12px">🎤 配信者へリクエスト送信</button><div id="copyText" class="box" style="margin-top:10px"></div><div class="btnrow"><button class="btn ghost" data-close="request">閉じる</button><button id="copyBtn" class="btn ghost">コメント用コピー</button></div></div></div>
+<div id="request" class="overlay"><div class="sheet"><h3 id="reqTitle"></h3><p class="sub">このページから配信者へ直接リクエストできます。TikTokコメントへ貼る場合はコピーも使えます。</p><div id="reqAcceptStatus" style="margin:10px 0 0;padding:9px 11px;border-radius:11px;font-size:11px;font-weight:900;background:rgba(53,208,127,.10);color:#8de4b4;border:1px solid rgba(53,208,127,.25)">🟢 現在リクエスト受付中</div><div class="field"><label>TikTok名（必須）</label><input id="reqName" class="input" maxlength="40" placeholder="TikTok名を入力" required autocomplete="nickname"></div><button id="sendRequestBtn" class="btn primary" style="width:100%;margin-top:12px">🎤 配信者へリクエスト送信</button><div id="copyText" class="box" style="margin-top:10px"></div><div class="btnrow"><button class="btn ghost" data-close="request">閉じる</button><button id="copyBtn" class="btn ghost">コメント用コピー</button></div></div></div>
 
 
 <div id="artistPopup" class="overlay artist-popup"><div class="sheet">
@@ -651,6 +651,11 @@ $('#artistPopup').onclick=e=>{if(e.target===$('#artistPopup')){popupArtist='';cl
 $('#sendRequestBtn').onclick=async()=>{
   if(!selected||room?.request_accepting===false)return;
   const btn=$('#sendRequestBtn'),name=$('#reqName').value.trim();
+  if(!name){
+    toast('TikTok名を入力してください');
+    $('#reqName').focus();
+    return;
+  }
   localStorage.setItem(REQNAMEKEY,name);
   btn.disabled=true;btn.textContent='送信中…';
   try{
