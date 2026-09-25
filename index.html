@@ -137,7 +137,7 @@ body.has-room-bg{background-image:linear-gradient(rgba(5,5,9,.70),rgba(5,5,9,.78
 
 <div id="admin" class="overlay"><div class="sheet">
   <div id="login"><h3 id="adminTitle">管理モード</h3><p class="sub">配信者専用PWを入力してください。</p><div class="field"><label>管理PW</label><input id="pw" class="input" type="password"></div><div class="btnrow"><button class="btn ghost" data-close="admin">閉じる</button><button id="loginBtn" class="btn primary">ログイン</button></div></div>
-  <div id="menu" hidden><h3>管理モード</h3><p class="sub">曲・ヘッダー文字・デザイン・PWを管理できます。</p><div class="btnrow"><button id="logoutBtn" class="btn ghost">ログアウト</button><button id="addBtn" class="btn primary">＋ 曲を追加</button></div><a id="requestBoardBtn" class="btn primary" href="requests.html" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;text-decoration:none">🔔 リクエスト受付ボード</a><button id="headerTextBtn" class="btn ghost" style="width:100%;margin-top:8px">✏️ ヘッダー文字設定</button><button id="designBtn" class="btn ghost" style="width:100%;margin-top:8px">🎨 デザイン設定</button><button id="changePw" class="btn ghost" style="width:100%;margin-top:8px">PW変更</button></div>
+  <div id="menu" hidden><h3>管理モード</h3><p class="sub">曲・ヘッダー文字・デザイン・PWを管理できます。</p><div class="btnrow"><button id="logoutBtn" class="btn ghost">ログアウト</button><button id="addBtn" class="btn primary">＋ 曲を追加</button></div><button id="adminAcceptBtn" class="btn ghost" style="width:100%;margin-top:8px">🟢 リクエスト受付中（タップで停止）</button><a id="requestBoardBtn" class="btn primary" href="requests.html" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;text-decoration:none">🔔 リクエスト受付ボード</a><button id="headerTextBtn" class="btn ghost" style="width:100%;margin-top:8px">✏️ ヘッダー文字設定</button><button id="designBtn" class="btn ghost" style="width:100%;margin-top:8px">🎨 デザイン設定</button><button id="changePw" class="btn ghost" style="width:100%;margin-top:8px">PW変更</button></div>
 </div></div>
 
 <div id="headertext" class="overlay"><div class="sheet">
@@ -573,7 +573,7 @@ function renderArtistPopup(){
   $('#artistPopupCount').textContent=shown.length+'曲 / 全'+base.length+'曲';
   $('#artistPopupList').innerHTML=shown.length?shown.map(songLine).join(''):'<div class="artist-empty">該当する曲はありません</div>';
 }
-function adminUI(){document.body.classList.toggle('admin',!!token);$('#login').hidden=!!token;$('#menu').hidden=!token}
+function adminUI(){document.body.classList.toggle('admin',!!token);$('#login').hidden=!!token;$('#menu').hidden=!token;if(token&&room)renderAdminRequestAccepting(room.request_accepting!==false)}
 async function call(p){
   let h={'Content-Type':'application/json'};if(token)h['x-admin-token']=token;
   let r=await fetch(ADMIN,{method:'POST',headers:h,body:JSON.stringify(p)}),d=await r.json();
@@ -585,6 +585,14 @@ $('#search').oninput=e=>{state.q=e.target.value;inlineArtist='';render()};
 $('#filters').onclick=e=>{let b=e.target.closest('[data-f]');if(!b)return;state.f=b.dataset.f;inlineArtist='';if(state.f==='original'){state.k='all';renderArtistIndex()}$$('#filters [data-f]').forEach(x=>x.classList.toggle('active',x===b));render()};
 $('#artistMode').onclick=e=>{const b=e.target.closest('[data-mode]');if(!b||b.dataset.mode===state.nameMode)return;state.nameMode=b.dataset.mode;state.k='all';inlineArtist='';renderArtistIndex();render()};
 $('#kana').onclick=e=>{let b=e.target.closest('[data-k]');if(!b)return;state.k=b.dataset.k;inlineArtist='';$$('#kana [data-k]').forEach(x=>x.classList.toggle('active',x===b));render()};
+function renderAdminRequestAccepting(enabled){
+  const b=$('#adminAcceptBtn');if(!b)return;
+  const on=enabled!==false;
+  b.textContent=on?'🟢 リクエスト受付中（タップで停止）':'🔴 リクエスト受付停止中（タップで開始）';
+  b.style.color=on?'#8de4b4':'#ffb2bb';
+  b.style.borderColor=on?'rgba(53,208,127,.35)':'rgba(255,107,122,.32)';
+  b.style.background=on?'rgba(53,208,127,.10)':'rgba(255,107,122,.10)';
+}
 function setRequestAcceptingUI(enabled){
   if(room)room.request_accepting=enabled!==false;
   const on=enabled!==false,st=$('#reqAcceptStatus'),btn=$('#sendRequestBtn');
@@ -599,6 +607,7 @@ function setRequestAcceptingUI(enabled){
     btn.textContent=on?'🎤 配信者へリクエスト送信':'現在は受付停止中';
     btn.style.opacity=on?'1':'.55';
   }
+  renderAdminRequestAccepting(on);
 }
 async function checkRequestAccepting(){
   try{
@@ -659,10 +668,20 @@ $('#copyBtn').onclick=async()=>{await navigator.clipboard.writeText($('#copyText
 $$('[data-close]').forEach(b=>b.onclick=()=>close(b.dataset.close));
 $$('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o&&o.id!=='theme'&&o.id!=='artistPopup')o.classList.remove('show')});
 $$('[data-nav]').forEach(b=>b.onclick=()=>{state.f=b.dataset.nav;inlineArtist='';$$('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render();scrollTo(0,0)});
-$('#navSearch').onclick=()=>{$('#search').focus();scrollTo(0,0)};$('#secret').onclick=()=>{adminUI();open('admin')};
+$('#navSearch').onclick=()=>{$('#search').focus();scrollTo(0,0)};$('#secret').onclick=()=>{adminUI();open('admin');if(token)checkRequestAccepting()};
 
 $('#loginBtn').onclick=async()=>{try{let d=await call({action:'login',room:SLUG,password:$('#pw').value});token=d.token;sessionStorage.setItem(TOKKEY,token);$('#pw').value='';adminUI();toast('ログインしました')}catch(e){toast(e.message)}};
 $('#logoutBtn').onclick=async()=>{try{await call({action:'logout'})}catch{}token='';sessionStorage.removeItem(TOKKEY);adminUI();close('admin')};
+$('#adminAcceptBtn').onclick=async()=>{
+  const b=$('#adminAcceptBtn'),next=room?.request_accepting===false;
+  b.disabled=true;
+  try{
+    const d=await call({action:'update_request_accepting',enabled:next});
+    setRequestAcceptingUI(d.request_accepting!==false);
+    toast(d.request_accepting!==false?'🟢 リクエスト受付を開始しました':'🔴 リクエスト受付を停止しました');
+  }catch(e){toast(e.message)}
+  finally{b.disabled=false}
+};
 $('#addBtn').onclick=()=>{close('admin');edit(null)};$('#fab').onclick=()=>edit(null);$('#changePw').onclick=()=>{close('admin');open('pwchange')};$('#designBtn').onclick=openThemeEditor;$('#headerTextBtn').onclick=openHeaderTextEditor;
 
 $('#headerTextSave').onclick=async()=>{
