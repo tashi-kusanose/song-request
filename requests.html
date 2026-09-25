@@ -32,9 +32,8 @@ button,input{font:inherit}.wrap{width:min(100%,760px);margin:auto;padding:18px 1
   <div id="loginView" class="loginbox" hidden>
     <div class="eyebrow">STREAMER REQUEST BOARD</div>
     <h2>リクエスト受付ボード</h2>
-    <p class="sub">配信者用の管理PWでログインしてください。</p>
-    <input id="pw" class="input" type="password" inputmode="text" placeholder="管理PW">
-    <button id="loginBtn" class="btn primary">ログイン</button>
+    <p class="sub">この端末では管理認証が確認できません。歌リストの管理画面から「リクエスト受付ボード」を開いてください。</p>
+    <a id="backToSongs" class="btn primary" href="./" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;text-decoration:none">歌リストへ戻る</a>
   </div>
 
   <main id="board" hidden>
@@ -83,7 +82,7 @@ function resolveRoomSlug(){
 }
 const SLUG=resolveRoomSlug();
 const TOKKEY='song_admin_'+SLUG;
-let token=sessionStorage.getItem(TOKKEY)||'';
+let token=sessionStorage.getItem(TOKKEY)||localStorage.getItem(TOKKEY)||'';
 let requests=[],initialized=false,pollTimer=null,audioCtx=null,requestAccepting=true;
 
 function toast(msg){
@@ -93,7 +92,7 @@ async function call(payload){
   const h={'Content-Type':'application/json'};if(token)h['x-admin-token']=token;
   const r=await fetch(ADMIN,{method:'POST',headers:h,body:JSON.stringify(payload)});
   const d=await r.json().catch(()=>({}));
-  if(!r.ok){if(r.status===401&&payload.action!=='login'){token='';sessionStorage.removeItem(TOKKEY);showLogin()}throw Error(d.error||'処理に失敗しました')}
+  if(!r.ok){if(r.status===401){token='';sessionStorage.removeItem(TOKKEY);localStorage.removeItem(TOKKEY);showLogin()}throw Error(d.error||'処理に失敗しました')}
   return d
 }
 async function loadRoom(){
@@ -105,6 +104,7 @@ async function loadRoom(){
 }
 function showLogin(){
   $('#loginView').hidden=false;$('#board').hidden=true;
+  $('#backToSongs').href='./?room='+encodeURIComponent(SLUG);
   if(pollTimer){clearInterval(pollTimer);pollTimer=null}
 }
 function showBoard(){
@@ -201,13 +201,6 @@ document.addEventListener('click',e=>{
   if(del){deleteHistoryOne(del.dataset.deleteHistory,del.dataset.song||'この履歴');return}
   const b=e.target.closest('[data-status]');if(b)updateStatus(b.dataset.id,b.dataset.status)
 });
-$('#loginBtn').onclick=async()=>{
-  try{
-    const d=await call({action:'login',room:SLUG,password:$('#pw').value});
-    token=d.token;sessionStorage.setItem(TOKKEY,token);$('#pw').value='';initialized=false;showBoard();await refresh();startPolling();toast('ログインしました')
-  }catch(e){toast(e.message)}
-};
-$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#loginBtn').click()});
 $('#acceptBtn').onclick=async()=>{
   const next=!requestAccepting;
   const b=$('#acceptBtn');b.disabled=true;
